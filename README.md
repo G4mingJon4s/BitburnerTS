@@ -5,7 +5,7 @@
 ## Installation
 
 ```
-git clone https://github.com/bitburner-official/typescript-template
+git clone https://github.com/bitburner-official/typescript-template](https://github.com/G4mingJon4s/BitburnerTS)
 npm i
 ```
 
