@@ -1,48 +1,17 @@
-## Dependencies
+# BitburnerTS
 
-[Node.js](https://nodejs.org/en/download/) required for compiling typescript and installing dependencies
+All of my TS scripts for Bitburner.
 
-## Installation
+# Scripts
 
-```
-git clone https://github.com/bitburner-official/typescript-template](https://github.com/G4mingJon4s/BitburnerTS)
-npm i
-```
+- Located inside `src`
+- Text files copied to `dist` manually
 
-## How to use this template
+# Server
 
-Write all your typescript source code in the `/src` directory
+- Node / Express localhost
+- Runs static sites
 
-To autocompile as you save, run `npm run watch` in a terminal
+# Contact
 
-## Imports
-
-To ensure both the game and typescript have no issues with import paths, your import statements should follow a few formatting rules:
-
-- Paths must be absolute from the root of `src/`, which will be equivalent to the root directory of your home drive
-- Paths must contain no leading slash
-- Paths must end with no file extension
-
-### Examples:
-
-To import `helperFunction` from the file `helpers.ts` located in the directory `src/lib/`:
-
-```js
-import { helperFunction } from "lib/helpers";
-```
-
-To import all functions from the file `helpers.ts` located in the `src/lib/` directory as the namespace `helpers`:
-
-```js
-import * as helpers from "lib/helpers";
-```
-
-To import `someFunction` from the file `main.ts` located in the `src/` directory:
-
-```js
-import { someFunction } from "main";
-```
-
-## Deugging
-
-For debugging bitburner on Steam you will need to enable a remote debugging port. This can be done by rightclicking bitburner in your Steam library and selecting properties. There you need to add `--remote-debugging-port=9222` [Thanks @DarkMio]
+- Discord: `G4mingJon4s#6950`
