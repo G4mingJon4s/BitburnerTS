@@ -1,0 +1,33 @@
+{"graph1": {
+	"graphType": "pie",
+	"innerRadius": 0.4,
+	"cornerRadius": 10,
+	"padAngle": 2,
+	"activeInnerRadiusOffset": -5,
+	"activeOuterRadiusOffset": 8,
+	"margin": { "top": 40, "bottom": 40},
+	"borderWidth": 3,
+	"sortByValue": true,
+	"borderColor": {
+		"from": "color",
+		"modifiers": [["darker", 0.5]]
+	},
+	"colors": {"scheme": "category10"},
+	"arcLinkLabelsThickness": 2,
+	"arcLinkLabelsColor": {"from": "color"},
+	"theme": {
+		"fontSize": 18
+}},
+"money": {
+	"graphType": "line",
+	"margin": { "top": 50, "right": 110, "bottom": 50, "left": 60 },
+	"xScale": { "type": "linear" },
+	"yScale": { "type": "linear" },
+	"axisTop": null,
+	"axisRight": null,
+	"colors": { "scheme": "set2" },
+	"lineWidth": 6,
+	"enablePoints": true,
+	"useMesh": true,
+	"enableArea": true
+}}

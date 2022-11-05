@@ -1,0 +1,41 @@
+{"graph1": [
+	{
+		"id": "graph1",
+		"label": "graph1",
+		"value": 123
+	},
+	{
+		"id": "graph2",
+		"label": "graph2",
+		"value": 32
+	},
+	{
+		"id": "graph3",
+		"label": "graph3",
+		"value": 53
+	}
+],
+"money": [
+	{
+		"id": "money",
+		"data": [
+			{
+				"x": 1,
+				"y": 10023
+			}, {
+				"x": 2,
+				"y": 48333
+			}, {
+				"x": 3,
+				"y": 47599
+			}, {
+				"x": 4,
+				"y": 30829
+			}, {
+				"x": 15,
+				"y": 10
+			}
+		]
+	}
+]
+}

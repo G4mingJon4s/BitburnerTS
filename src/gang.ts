@@ -4,7 +4,7 @@ import { readFile } from "getter";
 const NAMEFILE = "gangNames.txt";
 const LOGGING = true;
 const SHOWCLASHONHOCK = true;
-const MINCLASHCHANCE = 0.55;
+const MINCLASHCHANCE = 0.6;
 
 const ALLTASKS = [
 	"Mug People",
@@ -31,6 +31,8 @@ export async function main(ns:NS) {
 
 	if (LOGGING) ns.print(`Found ${allNames.length} names.${allNames.length < 12 ? ` Missing ${12 - allNames.length} names!` : ""}`);
 
+	if (allNames.length < 12) return;
+
 	ns.print("Syncing with territory warfare!");
 
 	while (!await tickSync(ns)) ns.print("Could not tickSync!");
@@ -45,35 +47,38 @@ export async function main(ns:NS) {
 
 		members.forEach(member => ascendMember(ns, member));
 
-		members.forEach(member => assignTask(ns, member));
-
 		buyEquipments(ns, members, ns.getPlayer().money * 0.8, getDiscount(ns) > 0.3);
-
+		
 		if (gangInfo.territory < 1 && warfareTick + checkBack < ns.getTimeSinceLastAug() + 500) {
-			if (SHOWCLASHONHOCK) hook0.innerText = "Gang clash now";
-
-			members.forEach(member => ns.gang.setMemberTask(member, "Territory Warfare"));
-
-			const clashNotAllowed = Object.keys(ns.gang.getOtherGangInformation()).some(gangName => gangName !== gangInfo.faction && ns.gang.getChanceToWinClash(gangName) < MINCLASHCHANCE);
-
-			if (LOGGING && !clashNotAllowed) ns.print("Engaging in warfare!");
-
-			ns.gang.setTerritoryWarfare(!clashNotAllowed);
-
+			if (SHOWCLASHONHOCK) hook0.innerText = "Gang clash now ";
+			
+			const clashAllowed = canClash(ns);
+			ns.gang.setTerritoryWarfare(clashAllowed);
+			if (LOGGING && clashAllowed) ns.print("Engaging in warfare!");
+			
+			members.filter(member => !clashAllowed || ns.gang.getMemberInformation(member).def >= 600).forEach(member => ns.gang.setMemberTask(member, "Territory Warfare"));
+			
 			while (!await tickSync(ns)) ns.print("Could not tickSync!");
 			warfareTick = ns.getTimeSinceLastAug();
 			checkBack = ns.gang.getBonusTime() > 100 ? 800 : 20000;
-
+			
 			ns.gang.setTerritoryWarfare(false);
-
-			members.forEach(member => assignTask(ns, member, true));
 		}
 
+		members.forEach(member => assignTask(ns, member));
+
 		if (LOGGING) displayPresence(ns);
-		if (gangInfo.territory < 1 && SHOWCLASHONHOCK) hook0.innerText = `Gang clash in ${((warfareTick + checkBack - ns.getTimeSinceLastAug()) / 1000).toFixed(1)}s`;
+		if (gangInfo.territory < 1 && SHOWCLASHONHOCK) hook0.innerText = `Gang clash in ${((warfareTick + checkBack - ns.getTimeSinceLastAug()) / 1000).toFixed(1)}s `;
+		if (gangInfo.territory === 1 && hook0.innerText !== "" && SHOWCLASHONHOCK) hook0.innerText = "";
 		
 		await ns.sleep(500);
 	}
+}
+
+export function canClash(ns: NS) {
+	const otherGangs = Object.entries(ns.gang.getOtherGangInformation());
+	const wins = otherGangs.filter(pair => pair[1].territory > 0 && pair[0] !== ns.gang.getGangInformation().faction).map(pair => Number(ns.gang.getChanceToWinClash(pair[0]) > MINCLASHCHANCE ? 1 : -1)).reduce((a, b) => a + b);
+	return wins > 0;
 }
 
 export function ascendMember(ns: NS, member: string) {
@@ -82,7 +87,7 @@ export function ascendMember(ns: NS, member: string) {
 	const respect = ns.gang.getMemberInformation(member).earnedRespect;
 	const gangRespect = ns.gang.getGangInformation().respect;
 	const ratio = respect / gangRespect;
-	if (ratio > 1 / 10 && ns.gang.getMemberNames().length === 12) return false;
+	if (ratio > 1 / 10 || ns.gang.getMemberNames().length !== 12) return false;
 	
 	const threshold = calculateAscendTreshold(ns, member);
 	
@@ -101,17 +106,17 @@ export function recruitMember(ns: NS, allNames: string[]) {
 	while (ns.gang.canRecruitMember()) {
 		const members = ns.gang.getMemberNames();
 		const possible = allNames.filter(name => !members.includes(name));
-		const name = possible.at(Math.floor(Math.random() * possible.length));
-		if (name === undefined) throw new Error("No viable name. Did you win the lottery?");
+		const name = possible[Math.floor(Math.random() * possible.length)];
 		if (LOGGING) ns.print(`Recruiting ${name}!`);
 		ns.gang.recruitMember(name);
 	}
 }
 
-export function assignTask(ns: NS, member: string, warfareSwitch = false) {
+export function assignTask(ns: NS, member: string) {
 	const gangInfo = ns.gang.getGangInformation();
 	const memberInfo = ns.gang.getMemberInformation(member);
-	const money = ns.singularity.getFactionRep(gangInfo.faction) > 2e7;
+	const fromWarfare = memberInfo.task === "Territory Warfare";
+	const money = ns.gang.getMemberNames().length === 12 && ns.singularity.getFactionRep(gangInfo.faction) > 2e6;
 	const applicableTasks = [];
 	for (const taskName of ALLTASKS) {
 		const taskStats = ns.gang.getTaskStats(taskName);
@@ -135,7 +140,7 @@ export function assignTask(ns: NS, member: string, warfareSwitch = false) {
 		applicableTasks.sort((a, b) => b[sort] - a[sort]);
 	}
 
-	if (applicableTasks.length === 0) applicableTasks.push({
+	if (applicableTasks.length === 0 || (memberInfo.str + memberInfo.def + memberInfo.agi + memberInfo.dex + memberInfo.hack) < 200) applicableTasks.unshift({
 		taskName: "Train Combat",
 		moneyGain: 0,
 		respectGain: 0,
@@ -144,7 +149,7 @@ export function assignTask(ns: NS, member: string, warfareSwitch = false) {
 
 	if (memberInfo.task === applicableTasks[0].taskName) return;
 
-	if (LOGGING && !warfareSwitch) ns.print(`Assigning ${member} to ${applicableTasks[0].taskName}`);
+	if (LOGGING && !fromWarfare) ns.print(`Assigning ${member} to ${applicableTasks[0].taskName}`);
 
 	ns.gang.setMemberTask(member, applicableTasks[0].taskName);
 }
@@ -210,7 +215,7 @@ export function displayPresence(ns: NS) {
 
 	const extractNum = (displayString: string) => {
 		const possible = displayString.match(displayRegex);
-		if (possible === null || possible.length < 2) return NaN;
+		if (possible === null || possible.length < 2) return 1;
 		return Number(possible[1]);
 	};
 	const removeDisplay = (log: string[]) => log.filter(entry => entry.match(displayRegex) === null);

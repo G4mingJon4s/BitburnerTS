@@ -103,3 +103,25 @@ export function readFile(ns:NS, file: string, server: string, port = 1, waitingT
 
 	return foundData;
 }
+
+export async function httpPut(url : string | URL, data: string) {
+	return await fetch(url, {
+		method: "PUT",
+		body: data,
+		headers: { "Content-Type": "application/json; charset=utf-8" },
+	});
+}
+
+export async function httpPost(url: string | URL, data: string) {
+	return await fetch(url, {
+		method: "POST",
+		body: data,
+		headers: { "Content-Type": "application/json; charset=utf-8" },
+	});
+}
+
+export async function httpGet(url: string | URL) {
+	return await fetch(url, {
+		method: "GET",
+	});
+}
