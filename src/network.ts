@@ -60,13 +60,13 @@ export function getConnectArray(ns: NS, targetServerName: string) {
 	return path;
 }
 
-export function getConnectString(ns: NS, targetServerName: string) {
+export function getConnectString(ns: NS, targetServerName: string, currentServerName = ns.singularity.getCurrentServer()) {
 	const allServers = getAllServers(ns);
 	const connections = new Map<string, string[]>(allServers.map(server => [server, ns.scan(server)]));
 	
 	const path = new Array<string>(targetServerName);
 
-	while (path[0] !== "home") {
+	while (path[0] !== currentServerName || path[0] !== "home") {
 		const current = path[0];
 		const parentElement = Array.from(connections.entries()).find(entry => entry[1].includes(current));
 		if (parentElement === undefined) throw new Error(`Could not find parent server of ${current}!`);

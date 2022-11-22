@@ -19,10 +19,12 @@ module.exports = {
 			},
 			rules: {
 				"@typescript-eslint/require-await": ["off"],
-				"@typescript-eslint/no-use-before-define": ["error", { "typedefs": false,
+				"@typescript-eslint/no-use-before-define": ["error", {
+					"typedefs": false,
 					"enums": false,
 					"functions": false,
 					classes: false,
+					allowNamedExports: false,
 				}],
 				"no-use-before-define": ["off"],
 				"@typescript-eslint/no-explicit-any": "warn",

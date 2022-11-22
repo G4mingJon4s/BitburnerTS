@@ -2,10 +2,10 @@ import { NS } from "@ns";
 import { table } from "table";
 import { money } from "./money";
 
-const ALLOWSHORTS = false;
+const ALLOWSHORTS = false; // CAUTION: LATEST TEST (BN8.2) WITH SHORTS RESULTED IN LOSSES
 const MONEYPERCENTAGE = 0.75;
 const MINPURCHASE = 5_000_000;
-const MAXPURCHASE = 40_000_000_000;
+const MAXPURCHASE = 10_000_000_000_000;
 const TRANSACTION = 100_000;
 const RATES = {
 	short: {
@@ -60,7 +60,7 @@ export async function main(ns:NS) {
 		scriptTable(ns, stocks);
 		overviewDisplay(hook1, stocks);
 
-		// Check after, because you could have just enough to buy it, but not enough to recover
+		// Check after buying stocks, because you could have just enough to buy it, but not enough to recover
 		HAS4SACCESS = ns.stock.purchase4SMarketDataTixApi();
 	}
 }
