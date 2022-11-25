@@ -26,6 +26,8 @@ export async function main(ns: NS) {
 		backdoored += Number(ns.getServer(server).backdoorInstalled);
 	}
 
+	ns.singularity.connect("home"); // QoL
+
 	ns.tprint(`Backdoored ${backdoored} new servers!`);
 }
 
