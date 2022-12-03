@@ -3,9 +3,9 @@
   "version": "2.0.0",
   "scripts": {
     "watch:transpile": "tsc -w --preserveWatchOutput",
-    "watch:local": "node build/watch.js",
+    "watch:local": "node build/watch.cjs",
     "watch:remote": "bitburner-filesync",
-    "watch:init": "node build/init.js",
+    "watch:init": "node build/init.cjs",
     "watch:all": "concurrently npm:watch:transpile npm:watch:local npm:watch:remote",
     "watch": "npm run watch:init && npm run watch:all"
   },

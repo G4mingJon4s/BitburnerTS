@@ -1,5 +1,5 @@
 const fs = require('node:fs');
-const { dist } = require('./config');
+const { dist } = require('./config.cjs');
 
 // ensure dist exist
 if (!fs.existsSync(dist)) {

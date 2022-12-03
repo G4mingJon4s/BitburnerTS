@@ -3,7 +3,7 @@ const path = require('node:path');
 const syncDirectory = require('sync-directory');
 const fg = require('fast-glob');
 const chokidar = require('chokidar');
-const { src, dist, allowedFiletypes } = require('./config');
+const { src, dist, allowedFiletypes } = require('./config.cjs');
 
 /** Format dist path for printing */
 function normalize(p) {
