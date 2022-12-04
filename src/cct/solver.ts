@@ -85,7 +85,7 @@ export async function main(ns: NS) {
 		const result = ns.codingcontract.attempt(contract.answer, contract.name, contract.server);
 
 		if (result) {
-			ns.print("SUCCESS!");
+			ns.print(`SUCCESS! ${result}`);
 			await addFinished(ns, contract);
 		} else {
 			ns.print(`ERROR! Removing ${contract.type}`);
