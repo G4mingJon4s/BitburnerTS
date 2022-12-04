@@ -31,6 +31,7 @@ export async function main(ns:NS) {
 
 	ns.atExit(() => {
 		hook1.innerText = "";
+		try { sellStocks(ns, stocks, true); } catch { ns.tprint("ERROR: COULD NOT SELL STOCKS!"); }
 	});
 
 	const marketUpdated = isMarketUpdated(ns); // Generator, whose value is a boolean wether the market is updated
@@ -45,13 +46,7 @@ export async function main(ns:NS) {
 		currentCycle++;
 
 		stocks.forEach(stock => stock.update(ns, currentCycle === 75));
-
-		if (currentCycle === 75) console.warn("FLIP");
-		console.log(stocks);
-
 		currentCycle %= 75;
-
-		console.log(currentCycle);
 
 		sellStocks(ns, stocks);
 		
