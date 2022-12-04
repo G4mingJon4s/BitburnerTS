@@ -111,3 +111,9 @@ interface Opts {
 	alignNumbersRight?: boolean;
 	inlineHeader?: boolean;
 }
+
+export function progressBar(percentage: number, size: number) {
+	const lit = Math.round(percentage * size);
+	const unLit = size - lit;
+	return `[${String("").padEnd(lit, "|")}${String("").padEnd(unLit, "-")}]`;
+}

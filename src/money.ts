@@ -42,3 +42,19 @@ export function money(money: number, digits: number) {
 	});
 	return (minus ? "-" : "") + (item ? (money / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0");
 }
+
+export function tFormatter(ticks: number, simple = true) {
+	let seconds = ticks / 1000;
+	if (seconds < 1) return ticks.toFixed(0) + "t";
+	if (!simple && seconds > 60) {
+		let minutes = Math.floor(seconds / 60);
+		seconds -= minutes * 60;
+		if (minutes > 60) {
+			const hour = Math.floor(minutes / 60);
+			minutes -= hour * 60;
+			return hour.toString() + "h " + minutes.toString() + "m " + seconds.toFixed(2) + "s";
+		}
+		return minutes.toString() + "m " + seconds.toFixed(2) + "s";
+	}
+	return seconds.toFixed(2) + "s";
+}
