@@ -15,6 +15,7 @@ import { jumpI, jumpII } from "cct/jump";
 import { shortestPath } from "cct/shortestPath";
 import { distilVinegar } from "cct/vinegar";
 import { totalSum, totalSumII } from "cct/totalSum";
+import { comprLZDecode, comprLZEncode } from "cct/lz";
 
 import { getAllServers } from "/network";
 
@@ -41,6 +42,8 @@ export const availableSolvers = {
 	"Encryption II: Vigenère Cipher": distilVinegar,
 	"Total Ways to Sum": totalSum,
 	"Total Ways to Sum II": totalSumII,
+	"Compression II: LZ Decompression": comprLZDecode,
+	"Compression III: LZ Compression": comprLZEncode
 };
 
 export const CONTRACTFILES = {
@@ -48,8 +51,10 @@ export const CONTRACTFILES = {
 	missing: "contractMissing.txt",
 	finished: "contractFinished.txt",
 };
+
 export async function main(ns: NS) {
-	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); ns.resizeTail(2500, 1000); ns.moveTail(10, 10);
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
+	await ns.sleep(1); ns.resizeTail(2500, 1000); ns.moveTail(10, 10);
 	await ns.sleep(100);
 
 	const allServers = getAllServers(ns);
@@ -112,7 +117,7 @@ export async function solveContract(ns: NS, { input, type }: IContract) {
 /** @param {import('../NetscriptDefinitions').NS} ns */
 export function canDoContract(ns: NS, { type }: IContract) {
 	const data = JSON.parse(ns.read(CONTRACTFILES.error)) as { type: keyof typeof availableSolvers }[];
-	return !data.some((error) => error.type === type);
+	return data.every((error) => error.type !== type);
 }
 
 /** @param {import('../NetscriptDefinitions').NS} ns */
