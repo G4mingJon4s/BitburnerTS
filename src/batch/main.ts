@@ -29,6 +29,8 @@ export async function main(ns: NS) {
 	let nextBatch = performance.now();
 
 	while (true) {
+		if (performance.now() > nextBatch) schedule.checkPrep(ns);
+
 		while (schedule.filterTasks(Operations[4]).length < 2) {
 			while (nextBatch < performance.now()) {
 				nextBatch += WINDOW;
@@ -49,7 +51,6 @@ export async function main(ns: NS) {
 		}
 
 		schedule.process(ns);
-		schedule.checkPrep(ns);
 		schedule.removeTasks();
 		schedule.handleReports(ns);
 		schedule.checkWindows(ns);

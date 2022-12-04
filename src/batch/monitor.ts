@@ -3,7 +3,7 @@ import { objectToArray, table } from "/table";
 
 export async function main(ns: NS) {
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
-	const [server] = ns.args as [string];
+	const [server, performance] = ns.args as [string, boolean];
 
 	while (true) {
 		const obj = ns.getServer(server);
@@ -18,6 +18,7 @@ export async function main(ns: NS) {
 
 		ns.clearLog();
 		ns.printf("%s", tableString);
-		await ns.asleep(50);
+		if (performance) ns.resizeTail(600, 200);
+		await ns.asleep(200);
 	}
 }
