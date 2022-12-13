@@ -21,6 +21,8 @@ const ALLTASKS = [
 export async function main(ns:NS) {
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
 
+	const canBuy = ns.args[0] as boolean ?? true;
+
 	const doc = eval("document") as Document;
 	const hook0 = doc.getElementById("overview-extra-hook-0");
 	if (hook0 === null) throw new Error("no hook");
@@ -47,7 +49,7 @@ export async function main(ns:NS) {
 
 		members.forEach(member => ascendMember(ns, member));
 
-		buyEquipments(ns, members, ns.getPlayer().money * 0.8, getDiscount(ns) > 0.3);
+		if (canBuy) buyEquipments(ns, members, ns.getPlayer().money * 0.8, getDiscount(ns) > 0.3);
 		
 		if (gangInfo.territory < 1 && warfareTick + checkBack < ns.getTimeSinceLastAug() + 500) {
 			if (SHOWCLASHONHOCK) hook0.innerText = "Gang clash now ";
