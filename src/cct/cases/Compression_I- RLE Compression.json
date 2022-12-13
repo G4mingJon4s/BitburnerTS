@@ -1,0 +1,18 @@
+[
+  {
+    "input": "66666666666666666rrOOOOOOYYYYYYdyFKFOOOOOfffffffNmmmmmmmmLLLL700zGG",
+    "output": "96862r6O6Y1d1y1F1K1F5O7f1N8m4L17201z2G"
+  },
+  {
+    "input": "xYYYvvvvvv41vEEEEEEEEEEEEJJJJJJJJJJJJJLLLLLLLGGII48Hppq22vvvQQQQQQQQQQQQQeFFFFFFFFw51WYYYYYY",
+    "output": "1x3Y6v14111v9E3E9J4J7L2G2I14181H2p1q223v9Q4Q1e8F1w15111W6Y"
+  },
+  {
+    "input": "eeeeeeeeeIIjj1AppppppppppEESSSSyccGPww4MMSSHHOOww55kkkkk",
+    "output": "9e2I2j111A9p1p2E4S1y2c1G1P2w142M2S2H2O2w255k"
+  },
+  {
+    "input": "QQaqq66yyyyyyyy5CZkzhheee6666UUgv44j3wwwwwwiccKKKmm467ssDDkkQQQQQQQ4hh4ggJJAfffff",
+    "output": "2Q1a2q268y151C1Z1k1z2h3e462U1g1v241j136w1i2c3K2m1416172s2D2k7Q142h142g2J1A5f"
+  }
+]
