@@ -1,8 +1,16 @@
 /* eslint-disable no-fallthrough */
-import { NS } from "@ns";
+import { AutocompleteData, NS } from "@ns";
+
+export const FILENAME = "network.js";
 
 export async function main(ns: NS) {
-	const allowBackdoor = ns.args[0] as boolean ?? false;
+	const mode = ns.args[0] as (string | boolean) ?? false;
+
+	if (typeof mode === "string") {
+		ns.scp(FILENAME, mode, "home"); // QoL
+		const path = getConnectArray(ns, mode);
+		return path.forEach(server => ns.singularity.connect(server));
+	}
 
 	const allServers = getAllServers(ns);
 	
@@ -10,7 +18,7 @@ export async function main(ns: NS) {
 
 	ns.tprint(`Hacked ${hacked} new servers!`);
 
-	if (!allowBackdoor) return;
+	if (!mode) return;
 
 	const player = ns.getPlayer();
 	let backdoored = 0;
@@ -117,4 +125,8 @@ export function getAllServers(ns: NS) {
 		serverList.push(current);
 	}
 	return serverList;
+}
+
+export function autocomplete(data: AutocompleteData, args: string[]) {
+	return [...data.servers, "true", "false"];
 }
