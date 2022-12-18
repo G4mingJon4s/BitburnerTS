@@ -51,7 +51,7 @@ export async function main(ns:NS) {
 	while (true) {
 		recruitMember(ns, allNames);
 
-		const members = ns.gang.getMemberNames();
+		let members = ns.gang.getMemberNames();
 		const gangInfo = ns.gang.getGangInformation();
 
 		members.forEach(member => ascendMember(ns, member));
@@ -73,6 +73,8 @@ export async function main(ns:NS) {
 			
 			ns.gang.setTerritoryWarfare(false);
 		}
+
+		members = ns.gang.getMemberNames(); // If someone died during warfare, this will prevent crashes.
 
 		members.forEach(member => assignTask(ns, member, focusMoney));
 
