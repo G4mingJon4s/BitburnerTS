@@ -1,4 +1,4 @@
-import { Multipliers, NS } from "@ns";
+import { AutocompleteData, Multipliers, NS } from "@ns";
 import { table } from "/table";
 
 const FLAGS: [string, string | number | boolean][] = [
@@ -98,3 +98,7 @@ export const ALLFACTIONS = [
 	"Church of the Machine God",
 	"Shadows of Anarchy",
 ];
+
+export function autocomplete(data: AutocompleteData, args: string[]) {
+	return [data.flags(FLAGS)];
+}
