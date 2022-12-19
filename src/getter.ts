@@ -14,18 +14,27 @@ export async function main(ns:NS) {
 
 	if (mode) {
 		if (data === null) throw new Error("Data is not defined!");
+
+		ns.print("Writing to file...");
+
 		ns.write(file, data, "w");
+		
 		while (!handle.tryWrite(JSON.stringify({ 
 			file,
 			action: "write",
 			data,
 		}))) await ns.sleep(100);
+
+		ns.print("Done!");
+
+		await ns.sleep(500);
+
 		return;
 	}
 
 	if (!ns.fileExists(file)) throw new Error("File does not exist!");
 
-	ns.print("GETTING DATA");
+	ns.print("Reading from file...");
 
 	const foundData = ns.read(file);
 
@@ -35,7 +44,10 @@ export async function main(ns:NS) {
 		data: foundData 
 	}))) await ns.sleep(100);
 
-	ns.print(`FINISHED WRITING TO PORT ${port}:\n ${foundData}`);
+	ns.print("Done!");
+
+	await ns.sleep(500);
+
 	ns.closeTail();
 }
 
