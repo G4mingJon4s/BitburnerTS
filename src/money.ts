@@ -44,11 +44,11 @@ export function money(money: number, digits: number) {
 }
 
 export function tFormatter(ticks: number, simple = true) {
+	if (simple) return `${(ticks / 1000).toFixed(2)}s`;
+	
 	const date = new Date(ticks);
+	
 	const seconds = date.getSeconds();
-
-	if (simple) return `${seconds}s`;
-
 	const millis = date.getMilliseconds();
 	const minutes = date.getMinutes();
 	const hours = date.getHours();
