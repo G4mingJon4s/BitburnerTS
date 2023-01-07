@@ -3,6 +3,8 @@ import { NS } from "@ns";
 const DEFAULTANSICODE = "\x1b[00;49;00m";
 const TABLEANSICODE = "\x1b[00;49;00m";
 
+export const TERMINALLENGTH = 235;
+
 export async function main(ns: NS): Promise<void> {
 	ns.clearLog(); ns.tail();
 
@@ -27,9 +29,11 @@ export function objectToArray(obj: Record<string, unknown>) {
 }
 
 export function table(head: string[], data: string[][], opts: Opts = {}) {
-	const { ml = 1, mr = 1, alignNumbersRight = true, inlineHeader = false } = opts;
+	const { ml = 1, mr = 1, alignNumbersRight = true, inlineHeader = false, cutOff = true } = opts;
 
 	const numberRegEx = /^[$]?-?[\d']+\.?\d*[tsmhkbtqQ%]?$/;
+
+	const cutOffLength = cutOff ? TERMINALLENGTH : undefined;
 
 	const columnCount = Math.max(data.reduce((acc, row) => Math.max(acc, row.length), 0), head.length);
 
@@ -47,9 +51,17 @@ export function table(head: string[], data: string[][], opts: Opts = {}) {
 		return DEFAULTANSICODE + (getStringPad(ml) + string + getStringPad(columnLength - getStringLength(string)) + getStringPad(mr)) + DEFAULTANSICODE;
 	}));
 
-	const joinedString = (refinedData.reduce((acc, row) => (acc + "\n") + joinRow(row), getHead(filledHead, columnLengths, ml, mr, inlineHeader)) + "\n") + getDivider(2, columnLengths, ml, mr);
+	const joinedRows = refinedData.map(row => joinRow(row).slice(0, cutOffLength));
+	const headString = getHead(filledHead, columnLengths, ml, mr, inlineHeader);
+	const foodString = getDivider(2, columnLengths, ml, mr);
 
-	return joinedString;
+	const finalString = `${headString.slice(0, cutOffLength)}\n${joinedRows.reduce(toSingleString)}\n${foodString.slice(0, cutOffLength)}`;
+
+	return finalString;
+}
+
+export function toSingleString(a: string, b: string) {
+	return a + "\n" + b;
 }
 
 export function getStringLength(string: string) {
@@ -110,6 +122,7 @@ interface Opts {
 	mr?: number;
 	alignNumbersRight?: boolean;
 	inlineHeader?: boolean;
+	cutOff?: boolean;
 }
 
 export function progressBar(percentage: number, size: number) {
