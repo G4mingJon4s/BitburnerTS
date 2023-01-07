@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { AutocompleteData, NS } from "@ns";
 
 import { intToHam, hamToInt } from "cct/ham";
 import { generateIPs } from "cct/ip";
@@ -18,6 +18,10 @@ import { totalSum, totalSumII } from "cct/totalSum";
 import { comprLZDecode, comprLZEncode } from "cct/lz";
 
 import { getAllServers } from "/network";
+
+const FLAGS: [string, string | number | boolean][] = [
+	["fast", false],
+];
 
 export const availableSolvers = {
 	"Compression I: RLE Compression": RLEEncode,
@@ -43,7 +47,7 @@ export const availableSolvers = {
 	"Total Ways to Sum": totalSum,
 	"Total Ways to Sum II": totalSumII,
 	"Compression II: LZ Decompression": comprLZDecode,
-	"Compression III: LZ Compression": comprLZEncode
+	"Compression III: LZ Compression": comprLZEncode,
 };
 
 export const CONTRACTFILES = {
@@ -57,8 +61,13 @@ export async function main(ns: NS) {
 	await ns.sleep(1); ns.resizeTail(2500, 1000); ns.moveTail(10, 10);
 	await ns.sleep(100);
 
+	const data = ns.flags(FLAGS);
+	const fast = data["fast"] as boolean;
+
 	const allServers = getAllServers(ns);
 	const list = getAllContracts(ns, allServers);
+
+	const { getTiming, increment, reset } = delayHandler();
 
 	const contracts = list
 		.map((entry) => entry.contracts.map((name) => ({ name,
@@ -77,6 +86,7 @@ export async function main(ns: NS) {
 	ns.print(`INFO: Found ${contractsData.length} contracts.`);
 
 	for (const contract of contractsData) {
+		const id = contractsData.indexOf(contract);
 		try {
 			contract.answer = await solveContract(ns, contract) as never;
 		} catch {
@@ -89,15 +99,18 @@ export async function main(ns: NS) {
 
 		const result = ns.codingcontract.attempt(contract.answer, contract.name, contract.server);
 
-		if (result) {
-			ns.print(`SUCCESS! ${result}`);
+		if (result.length > 0) {
+			ns.print(`SUCCESS! ${id.toString().padStart(4, "0")} ${result}`);
 			await addFinished(ns, contract);
+			increment();
 		} else {
-			ns.print(`ERROR! Removing ${contract.type}`);
+			ns.print(`ERROR! ${id.toString().padStart(4, "0")}  Removing ${contract.type}`);
 			contract.failure = "value";
 			await addError(ns, contract);
+			reset();
 		}
-		await ns.sleep(1000);
+		await ns.sleep(getTiming());
+		if (fast) ns.resizeTail(2500, 1000);
 	}
 }
 
@@ -114,20 +127,17 @@ export async function solveContract(ns: NS, { input, type }: IContract) {
 	return answer;
 }
 
-/** @param {import('../NetscriptDefinitions').NS} ns */
 export function canDoContract(ns: NS, { type }: IContract) {
 	const data = JSON.parse(ns.read(CONTRACTFILES.error)) as { type: keyof typeof availableSolvers }[];
 	return data.every((error) => error.type !== type);
 }
 
-/** @param {import('../NetscriptDefinitions').NS} ns */
 export async function addError(ns: NS, contract: IContract) {
 	const data = JSON.parse(ns.read(CONTRACTFILES.error)) as IContract[];
 	data.push(contract);
 	ns.write(CONTRACTFILES.error, JSON.stringify(data), "w");
 }
 
-/** @param {import('../NetscriptDefinitions').NS} ns */
 export async function addFinished(ns: NS, { type, input, answer }: IContract) {
 	const data = JSON.parse(ns.read(CONTRACTFILES.finished)) as Record<keyof typeof availableSolvers, { input: never, output: never }[]>;
 	if (!data[type]) data[type] = [];
@@ -138,12 +148,29 @@ export async function addFinished(ns: NS, { type, input, answer }: IContract) {
 	ns.write(CONTRACTFILES.finished, JSON.stringify(data), "w");
 }
 
-/** @param {import('../NetscriptDefinitions').NS} ns */
 export async function addMissing(ns: NS, { type }: { type: keyof typeof availableSolvers }) {
 	const data = JSON.parse(ns.read(CONTRACTFILES.missing)) as (keyof typeof availableSolvers)[]; // act. not, but it works, so idc
 	if (data.includes(type)) return;
 	data.push(type);
 	ns.write(CONTRACTFILES.missing, JSON.stringify(data), "w");
+}
+
+export function delayHandler() {
+	let solved = 0;
+
+	const getTiming = () => Math.max(1000 - solved * 50, 100);
+	const increment = () => solved++;
+	const reset = () => solved = 0;
+
+	return {
+		getTiming,
+		increment,
+		reset
+	};
+}
+
+export function autocomplete(data: AutocompleteData, _args: string[]) {
+	return [data.flags(FLAGS)];
 }
 
 interface IContract {
