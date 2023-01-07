@@ -1,21 +1,20 @@
-import { NS } from "@ns";
+import { ActiveFragment, NS } from "@ns";
 import { table } from "table";
+import { money } from "money";
+import { getHosts, mapHosts, waitPids } from "./server";
 
-export const STANEKHOSTS = ["joesguns", "hong-fang-tea", "sigma-cosmetics", "the-hub", "phantasy", "ecorp", "pserv"];
 export const CHARGEFILE = "charge.js";
+export const IGNOREDHOSTS = ["home"];
 
 export async function main(ns: NS) {
-	ns.disableLog("ALL"); ns.clearLog();
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
 
-	const allFrags = ns.stanek.activeFragments().filter(frag => frag.id < 100);
-
-	STANEKHOSTS.filter(host => ns.serverExists(host)).forEach(host => ns.scp(CHARGEFILE, host, "home"));
+	const allFrags = getChargeableFrags(ns);
 
 	while (true) {
-		const threads = STANEKHOSTS.filter(host => ns.serverExists(host) && ns.hasRootAccess(host)).map(host => Math.floor((ns.getServerMaxRam(host) - ns.getServerUsedRam(host)) / (ns.getScriptRam(CHARGEFILE) * allFrags.length)));
-		const pids = STANEKHOSTS.filter((host, i) => ns.serverExists(host) && ns.hasRootAccess(host) && threads[i] > 0).flatMap((host, i) => allFrags.map(frag => ns.exec(CHARGEFILE, host, threads[i], frag.x, frag.y)));
+		const pids = launchCharge(ns, allFrags);
 
-		while (pids.some(pid => ns.isRunning(pid))) await ns.sleep(50);
+		await waitPids(ns, pids);
 
 		display(ns);
 	}
@@ -23,9 +22,30 @@ export async function main(ns: NS) {
 
 export function display(ns: NS) {
 	const allFrags = ns.stanek.activeFragments().filter(frag => frag.id < 100);
-	const data = allFrags.map(frag => [`X: ${frag.x} Y: ${frag.y}`, frag.numCharge.toExponential()]);
+
+	const hosts = getHosts(ns, ns.getScriptRam(CHARGEFILE) * allFrags.length, IGNOREDHOSTS);
+
+	const data = allFrags.map(frag => [`X: ${frag.x} Y: ${frag.y}`, money(frag.numCharge * frag.highestCharge, 2)]);
 	const tableString = table(["Position", "Charge"], data);
 
 	ns.clearLog();
+	ns.print(`Available Server: ${hosts.length}`);
+	ns.print(" ");
 	ns.printf("%s", tableString);
+}
+
+export function launchCharge(ns: NS, allFrags: ActiveFragment[]) {
+	const hosts = getHosts(ns, ns.getScriptRam(CHARGEFILE) * allFrags.length, IGNOREDHOSTS);
+
+	hosts.forEach(host => ns.scp(CHARGEFILE, host, "home"));
+
+	const mapped = mapHosts(ns, hosts, ns.getScriptRam(CHARGEFILE) * allFrags.length);
+
+	const pids = mapped.flatMap(host => allFrags.map(frag => ns.exec(CHARGEFILE, host.server, host.threads, frag.x, frag.y)));
+
+	return pids;
+}
+
+export function getChargeableFrags(ns: NS) {
+	return ns.stanek.activeFragments().filter(frag => frag.id < 100);
 }
