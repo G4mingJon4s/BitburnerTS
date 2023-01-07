@@ -16,7 +16,7 @@ export async function main(ns: NS) {
 
 	const end = performance.now();
 
-	await ns.writePort(port, JSON.stringify({
+	ns.writePort(port, JSON.stringify({
 		id,
 		type,
 		start,

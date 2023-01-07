@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { calculateGrowThreads } from "./lambert";
+import { getCalculations } from "batch/util";
 
 export const SPACER = 30;
 export const WINDOW = SPACER * 4;
@@ -16,7 +16,9 @@ export const OperationsNum = [
 	"BA",
 ];
 
-const HACKP = 0.7;
+let reservedRam = 0;
+
+const HACKP = 0.005;
 const TARGET = "joesguns";
 
 export async function main(ns: NS) {
@@ -29,23 +31,26 @@ export async function main(ns: NS) {
 	let nextBatch = performance.now();
 
 	while (true) {
-		if (performance.now() > nextBatch) schedule.checkPrep(ns);
+		// schedule.checkPrep(ns);
 
 		while (schedule.filterTasks(Operations[4]).length < 2) {
 			while (nextBatch < performance.now()) {
 				nextBatch += WINDOW;
 				ns.print("WARN: Skipping ahead, we are lagging behind!");
 			}
+
 			const { totalRamCost } = getCalculations(ns, TARGET, HACKP);
-			if (totalRamCost < getFreeRam(ns, ns.getHostname())) {
+			if (totalRamCost < getFreeRam(ns, ns.getHostname()) - reservedRam) {
 				const id = batchId++;
-				schedule.addTasks(new Task(-1, id, Operations[4], nextBatch, BASETOLERANCE, () => new Batch(id).createTasks(ns, schedule), []));
+				schedule.addTasks(new Task(-1, id, Operations[4], nextBatch, totalRamCost, BASETOLERANCE, () => new Batch(id).createTasks(ns, schedule), []));
 
-				console.log("Adding Batch");
+				reservedRam += totalRamCost;
+			} else {
+				if (nextBatch < performance.now() + WINDOW) nextBatch += WINDOW; // no idea
+				break;
 			}
-			nextBatch += WINDOW;
 
-			console.log(nextBatch, schedule.tasks, schedule.running, schedule.running.map(b => b.isDone()));
+			nextBatch += WINDOW;
 
 			await ns.asleep(0);
 		}
@@ -53,7 +58,7 @@ export async function main(ns: NS) {
 		schedule.process(ns);
 		schedule.removeTasks();
 		schedule.handleReports(ns);
-		schedule.checkWindows(ns);
+		// schedule.checkWindows(ns);
 
 		await ns.asleep(0);
 	}
@@ -80,8 +85,6 @@ export class Schedule {
 
 		const tasks = this.tasks.filter(task => task.time <= now && Number.isNaN(task.started) && !task.aborted);
 
-		console.log(this.running);
-
 		const dismissedBatches = new Array<number>();
 
 		for (const task of tasks) {
@@ -95,15 +98,21 @@ export class Schedule {
 			const taskDrift = now - task.time;
 
 			if (taskDrift > task.tolerance) {
-				const dismissed = this.abortTask(ns, task);
+				const dismissed = this.abortTask(ns, task, "Drift too high");
 				dismissedBatches.push(dismissed);
 				continue;
 			}
 
 			const pid = task.start();
-			if (pid === -1) continue;
+			if (pid === -1) {
+				if (task.type !== Operations[4]) {
+					this.getBatch(task.batch).isPrep = true;
+					// this.switchPrep(ns);
+				}
+				continue;
+			}
 			if (pid === 0) {
-				const dismissed = this.abortTask(ns, task);
+				const dismissed = this.abortTask(ns, task, "No pid");
 				dismissedBatches.push(dismissed);
 			}
 
@@ -123,14 +132,18 @@ export class Schedule {
 		this.lastProcess = performance.now();
 	}
 
-	checkPrep(ns: NS) {
-		if (!isPrepped(ns, TARGET)) {
-			this.running.filter(b => !b.isPrep).forEach(b => b.switchToPrep(ns));
-		}
+	switchPrep(ns: NS) {
+		this.running.sort((a, b) => a.id - b.id).slice(0, 10).filter(b => !b.isPrep).forEach(b => b.switchToPrep(ns)); // slicing values are chosen randomly
 	}
 
-	abortTask(ns: NS, task: Task) {
-		if (task.type !== Operations[4]) this.abortBatch(ns, task.batch);
+	getBatch(batchId: number) {
+		const batch = this.running.find(batch => batch.id === batchId);
+		if (batch === undefined) throw new Error(`Could not find Batch #${batchId}`);
+		return batch;
+	}
+
+	abortTask(ns: NS, task: Task, reason = "") {
+		if (task.type !== Operations[4]) this.abortBatch(ns, task.batch, reason);
 
 		task.aborted = true;
 
@@ -155,7 +168,22 @@ export class Schedule {
 	}
 
 	removeTasks() {
-		this.tasks = this.tasks.filter(task => Number.isNaN(task.started) && !task.aborted);
+		const relevantTasks = new Array<Task>();
+		const dismissedTasks = new Array<Task>();
+		for (const task of this.tasks) {
+			console.log(new Date(task.time).toUTCString(), new Date(performance.now()).toUTCString(), new Date(task.time - performance.now()).toUTCString());
+			if (task.aborted || !Number.isNaN(task.started) || task.time + task.tolerance < performance.now()) {
+				dismissedTasks.push(task);
+				continue;
+			}
+			relevantTasks.push(task);
+		}
+		this.tasks = relevantTasks;
+
+		dismissedTasks.forEach(task => {
+			if (!task.isFinished) reservedRam -= task.cost; // remove reserved cost, as the task is never gonna run. If it already ran, don't remove the ram twice.
+		});
+
 		this.running = this.running.filter(batch => {
 			if (batch.isDone()) {
 				if (!batch.aborted) this.archive.unshift(batch);
@@ -170,13 +198,14 @@ export class Schedule {
 		this.archive = this.archive.slice(0, 10);
 	}
 
-	abortBatch(ns: NS, batchId: number) {
+	abortBatch(ns: NS, batchId: number, reason = "") {
 		
 		const batch = this.running.find(batch => batch.id === batchId);
 		if (batch === undefined) {
 			return ns.print(`ERROR: Could not find Batch #${batchId}!`);
 		}
-		ns.print(`WARN: Aborting Batch #${batchId}!`);
+
+		ns.print(`WARN: Aborting Batch #${batchId}!${reason.length === 0 ? "" : ` Reason: "${reason}"`}`);
 
 		batch.abort(ns);
 
@@ -185,13 +214,13 @@ export class Schedule {
 
 	checkWindows(ns: NS) {
 		let lastStart = 0;
-		let lastEnd = Number.POSITIVE_INFINITY;
+		let lastEnd = 0;
 
 		for (const batch of this.archive) {
 			if (batch.aborted) continue;
 			lastStart = batch.start;
 
-			if (lastStart > lastEnd) ns.print(`ERROR: Batch #${batch.id} started before the end of the last Batch!`);
+			if (lastStart < lastEnd) ns.print(`ERROR: Batch #${batch.id} started before the end of the last Batch!`);
 
 			lastEnd = batch.end;
 		}
@@ -213,6 +242,7 @@ export class Schedule {
 }
 
 export function startTask(ns: NS, type: string, id: number, target: string, port: number, threads: number) {
+	if (type === Operations[0] && !isPrepped(ns, target)) return -1;
 	return ns.exec("/batch/task.js", "home", threads, id, type, target, port);
 }
 
@@ -237,6 +267,8 @@ export class Task {
 	args: never[];
 	aborted: boolean;
 	started: number;
+	cost: number;
+	isFinished: boolean;
 
 	/**
 	 * @param type The type of the task, can be "H ", "W1", "G ", "W2" or "BA"
@@ -244,7 +276,7 @@ export class Task {
 	 * @param func The function to run, when starting. Should return the pid of the running script. If no script is being executed, return -1.
 	 * @param args The args of the function
 	 */
-	constructor(id: number, batch: number, type: string, time: number, tolerance: number, func: (...args: never[]) => number, args: never[]) {
+	constructor(id: number, batch: number, type: string, time: number, cost: number, tolerance: number, func: (...args: never[]) => number, args: never[]) {
 		this.id = id;
 		this.batch = batch;
 		this.type = type;
@@ -255,9 +287,13 @@ export class Task {
 		this.args = args;
 		this.aborted = false;
 		this.started = NaN;
+		this.cost = cost;
+		this.isFinished = false;
 	}
 
 	start() {
+		reservedRam -= this.cost;
+		this.isFinished = true;
 		return this.func(...this.args);
 	}
 }
@@ -303,34 +339,28 @@ export class Batch {
 	}
 
 	switchToPrep(ns: NS) {
+		ns.print(`WARN: Switching Batch #${this.id} to prep! Paywindow check?`);
 		if (this.id === -1) return;
 		if (this.pids[0] && ns.isRunning(this.pids[0])) {
+			console.log("TOPREP", this.pids[0], ns.getRunningScript(this.pids[0])?.args);
 			ns.kill(this.pids[0]);
-			console.log("KILLED", this.pids[0]);
 			this.isPrep = true;
 		}
 	}
 
 	createTasks(ns: NS, schedule: Schedule) {
-		const { hackThreads, growThreads, weaken1Threads, weaken2Threads, startHack, startGrow, startWeaken2 } = getCalculations(ns, TARGET, HACKP);
+		const { hackThreads, growThreads, weaken1Threads, weaken2Threads, startHack, startGrow, startWeaken2, hackCost, growCost,	weaken1Cost, weaken2Cost, totalRamCost } = getCalculations(ns, TARGET, HACKP);
 
 		const start = performance.now();
 
 		const tasks: Task[] = [
-			new Task(0, this.id, Operations[0], start + startHack, BASETOLERANCE, () => startTask(ns, Operations[0], this.id, TARGET, PORT, hackThreads), []),
-			new Task(1, this.id, Operations[1], start, BASETOLERANCE, () => startTask(ns, Operations[1], this.id, TARGET, PORT, weaken1Threads), []),
-			new Task(2, this.id, Operations[2], start + startGrow, BASETOLERANCE, () => startTask(ns, Operations[2], this.id, TARGET, PORT, growThreads), []),
-			new Task(3, this.id, Operations[3], start + startWeaken2, BASETOLERANCE, () => startTask(ns, Operations[3], this.id, TARGET, PORT, weaken2Threads), []),
+			new Task(0, this.id, Operations[0], start + startHack, hackCost, BASETOLERANCE, () => startTask(ns, Operations[0], this.id, TARGET, PORT, hackThreads), []),
+			new Task(1, this.id, Operations[1], start, weaken1Cost, BASETOLERANCE, () => startTask(ns, Operations[1], this.id, TARGET, PORT, weaken1Threads), []),
+			new Task(2, this.id, Operations[2], start + startGrow, growCost, BASETOLERANCE, () => startTask(ns, Operations[2], this.id, TARGET, PORT, growThreads), []),
+			new Task(3, this.id, Operations[3], start + startWeaken2, weaken2Cost, BASETOLERANCE, () => startTask(ns, Operations[3], this.id, TARGET, PORT, weaken2Threads), []),
 		];
 
-		// if (!isPrepped(ns, TARGET)) {
-		// 	tasks.shift();
-		// 	this.isPrep = true;
-
-		// 	ns.print(`WARN: Batch #${this.id} is switching to prep!`);
-		// } // Test for prepping
-
-		// TODO: REWORK ISPREPPED
+		reservedRam += totalRamCost;
 
 		schedule.addTasks(...tasks);
 		schedule.addBatch(this);
@@ -346,56 +376,6 @@ export class Batch {
 		this.pids.forEach(pid => ns.kill(pid));
 		this.aborted = true;
 	}
-}
-
-export function getCalculations(ns: NS, target: string, hackP: number, hostName = ns.getHostname()) {
-	const scriptCost = 1.75;
-
-	const player = ns.getPlayer();
-
-	const server = ns.getServer(target);
-	server.hackDifficulty = server.minDifficulty;
-	server.moneyAvailable = server.moneyMax;
-	server.hasAdminRights = true;
-	server.backdoorInstalled = true;
-
-	const hostCores = ns.getServer(hostName).cpuCores;
-
-	const hackThreads = Math.max(Math.ceil(hackP / ns.formulas.hacking.hackPercent(server, player)), 1);
-	const hackTime = ns.formulas.hacking.hackTime(server, player);
-
-	const moneyGotten = hackThreads * ns.formulas.hacking.hackPercent(server, player) * server.moneyMax;
-	const growThreads = Math.max(Math.ceil(calculateGrowThreads(ns, target, moneyGotten, hostCores, { serverGrowthRate: ns.getBitNodeMultipliers().ServerGrowthRate })), 1);
-	const growTime = ns.formulas.hacking.growTime(server, player);
-
-	const weaken1Threads = Math.max(Math.ceil(ns.hackAnalyzeSecurity(hackThreads) / 0.05), 1);
-	const weaken2Threads = Math.max(Math.ceil(ns.growthAnalyzeSecurity(growThreads) / 0.05), 1);
-	const weakenTime = ns.formulas.hacking.weakenTime(server, player);
-
-	const finishHack = weakenTime - SPACER;
-	const finishGrow = weakenTime + SPACER;
-
-	const startHack = finishHack - hackTime;
-	const startGrow = finishGrow - growTime;
-	const startWeaken2 = 2 * SPACER;
-
-	const totalRamCost = scriptCost * (hackThreads + growThreads + weaken1Threads + weaken2Threads);
-
-	return {
-		hackThreads,
-		growThreads,
-		weaken1Threads,
-		weaken2Threads,
-		hackTime,
-		growTime,
-		weakenTime,
-		finishHack,
-		finishGrow,
-		startGrow,
-		startHack,
-		startWeaken2,
-		totalRamCost,
-	};
 }
 
 export type Report = {
