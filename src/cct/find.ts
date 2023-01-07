@@ -27,6 +27,6 @@ export function convertNames(names: string[], simple: boolean) {
 	return names.join(", ");
 }
 
-export function autocomplete(data: AutocompleteData, args: string[]) {
+export function autocomplete(data: AutocompleteData, _args: string[]) {
 	return [data.flags(FLAGS)];
 }

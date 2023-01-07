@@ -269,6 +269,6 @@ export function calculateAscendTreshold(ns: NS, member: string) {
 	return 1.0591;
 }
 
-export function autocomplete(data: AutocompleteData, args: string[]) {
+export function autocomplete(data: AutocompleteData, _args: string[]) {
 	return [data.flags(FLAGS), "true", "false"];
 }

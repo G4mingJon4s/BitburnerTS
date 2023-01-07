@@ -99,6 +99,6 @@ export const ALLFACTIONS = [
 	"Shadows of Anarchy",
 ];
 
-export function autocomplete(data: AutocompleteData, args: string[]) {
+export function autocomplete(data: AutocompleteData, _args: string[]) {
 	return [data.flags(FLAGS)];
 }

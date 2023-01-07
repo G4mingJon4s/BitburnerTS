@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-fallthrough */
 import { AutocompleteData, NS } from "@ns";
 
@@ -127,6 +131,6 @@ export function getAllServers(ns: NS) {
 	return serverList;
 }
 
-export function autocomplete(data: AutocompleteData, args: string[]) {
+export function autocomplete(data: AutocompleteData, _args: string[]) {
 	return [...data.servers, "true", "false"];
 }
