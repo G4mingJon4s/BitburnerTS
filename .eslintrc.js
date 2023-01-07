@@ -31,7 +31,13 @@ module.exports = {
 				"@typescript-eslint/no-unsafe-member-access": "warn",
 				"@typescript-eslint/no-unsafe-assignment": "warn",
 				"@typescript-eslint/no-unsafe-call": "warn",
-				"@typescript-eslint/unbound-method": "off"
+				"@typescript-eslint/unbound-method": "off",
+				"@typescript-eslint/no-unused-vars": ["warn", {
+					varsIgnorePattern: "^_",
+					argsIgnorePattern: "^_",
+					caughtErrorsIgnorePattern: "^_",
+					destructuredArrayIgnorePattern: "^_"
+				}],
 			},
 		}
 	],
@@ -50,7 +56,12 @@ module.exports = {
 		eqeqeq: ["warn"],
 		camelcase: ["error"],
 		"no-fallthrough": ["warn"],
-		"no-unused-vars": ["warn"],
+		"no-unused-vars": ["warn", {
+			varsIgnorePattern: "^_",
+			argsIgnorePattern: "^_",
+			caughtErrorsIgnorePattern: "^_",
+			destructuredArrayIgnorePattern: "^_"
+		}],
 		"no-constant-condition": ["off"],
 		"no-case-declarations": ["off"],
 		"no-constructor-return": ["error"],
