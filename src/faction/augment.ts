@@ -59,7 +59,7 @@ export function allAugs(ns: NS, focuses: string[], factions = ns.getPlayer().fac
 		return keys.some(key => focusMults.includes(key));
 	});
 
-	return withFocus;
+	return Array.from(new Set(withFocus));
 }
 
 export const ALLFACTIONS = [
