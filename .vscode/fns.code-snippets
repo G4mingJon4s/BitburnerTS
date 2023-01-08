@@ -15,14 +15,27 @@
 	// 	],
 	// 	"description": "Log output to console"
 	// }
-	"INS-Shortcut": {
+	"FNS-Shortcut": {
 		"prefix": [
-			"ins",
-			"imns"
+			"fns",
+			"flagns"
 		],
 		"scope": "typescript",
 		"body": [
-			"import { NS } from \"@ns\";",
+			"import { AutocompleteData, NS } from \"@ns\";",
+			"",
+			"const FLAGS: [string, string | number | boolean][] = [",
+			"\t[\"${test}\", false],",
+			"];",
+			"",
+			"export async function main(ns: NS) {",
+			"\tconst data = ns.flags(FLAGS);",
+			"\tconst test = data[\"${test}\"] as boolean;$0",
+			"}",
+			"",
+			"export function autocomplete(data: AutocompleteData, _args: string[]) {",
+			"\treturn [data.flags(FLAGS)];",
+			"}"
 		]
 	}
 }
