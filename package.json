@@ -11,7 +11,8 @@
 		"watch:init": "node build/init.cjs",
 		"watch:all": "concurrently npm:watch:transpile npm:watch:local npm:watch:remote",
 		"watch": "npm run watch:init && npm run watch:all",
-		"convert": "node build/convert.cjs"
+		"convert": "node build/convert.cjs",
+		"stringify": "node build/stringify.cjs"
 	},
 	"author": "G4mingJon4s, template by hydroflame and Hoekstraa",
 	"devDependencies": {
