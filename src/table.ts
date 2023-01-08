@@ -1,5 +1,7 @@
 import { NS } from "@ns";
 
+// TODO: fix cutOff counting ANSI codes
+
 const DEFAULTANSICODE = "\x1b[00;49;00m";
 const TABLEANSICODE = "\x1b[00;49;00m";
 
@@ -52,10 +54,10 @@ export function table(head: string[], data: string[][], opts: Opts = {}) {
 	}));
 
 	const joinedRows = refinedData.map(row => joinRow(row).slice(0, cutOffLength));
-	const headString = getHead(filledHead, columnLengths, ml, mr, inlineHeader);
+	const headString = getHead(filledHead, columnLengths, ml, mr, inlineHeader, cutOffLength);
 	const foodString = getDivider(2, columnLengths, ml, mr);
 
-	const finalString = `${headString.slice(0, cutOffLength)}\n${joinedRows.reduce(toSingleString)}\n${foodString.slice(0, cutOffLength)}`;
+	const finalString = `${headString}\n${joinedRows.reduce(toSingleString)}\n${foodString.slice(0, cutOffLength)}`;
 
 	return finalString;
 }
@@ -78,16 +80,16 @@ export function joinRow(row: string[], style = getBorder()) {
 	return (TABLEANSICODE + columnDivider) + row.join(TABLEANSICODE + columnDivider) + (TABLEANSICODE + columnDivider);
 }
 
-export function getHead(head: string[], columnLengths: number[], ml: number, mr: number, inline: boolean, style = getBorder()) {
+export function getHead(head: string[], columnLengths: number[], ml: number, mr: number, inline: boolean, cutOffLength: number | undefined, style = getBorder()) {
 	const refinedHead = head.map((string, i) => {
 		const columnLength = columnLengths[i];
 		return DEFAULTANSICODE + (getStringPad(ml) + string + getStringPad(columnLength - getStringLength(string)) + getStringPad(mr)) + DEFAULTANSICODE;
 	});
 
-	if (inline) return ((TABLEANSICODE + style[0][0] + DEFAULTANSICODE) + refinedHead.join(TABLEANSICODE + style[0][1] + DEFAULTANSICODE) + (TABLEANSICODE + style[0][2] + DEFAULTANSICODE)).replaceAll(" ", style[0][3]);
+	if (inline) return ((TABLEANSICODE + style[0][0] + DEFAULTANSICODE) + refinedHead.join(TABLEANSICODE + style[0][1] + DEFAULTANSICODE) + (TABLEANSICODE + style[0][2] + DEFAULTANSICODE)).replaceAll(" ", style[0][3]).slice(0, cutOffLength);
 
 	const joinedHead = joinRow(refinedHead);
-	return (getDivider(0, columnLengths, ml, mr) + "\n") + (joinedHead + "\n") + getDivider(1, columnLengths, ml, mr);
+	return `${getDivider(0, columnLengths, ml, mr).slice(0, cutOffLength)}\n${joinedHead.slice(0, cutOffLength)}\n${getDivider(1, columnLengths, ml, mr).slice(0, cutOffLength)}`;
 }
 
 export function getDivider(mode: 0 | 1 | 2, columnLengths: number[], ml: number, mr: number, style = getBorder()) {
