@@ -7,6 +7,8 @@ All of my TS scripts for Bitburner.
 - Located inside `src`
 - Text files copied to `dist` manually
 
+- To sync with the game run `npm run watch` and connect the remote api in game
+
 # Server
 
 - Node / Express localhost
