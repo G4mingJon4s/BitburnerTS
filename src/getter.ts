@@ -29,6 +29,8 @@ export async function main(ns:NS) {
 
 		await ns.sleep(500);
 
+		ns.closeTail();
+
 		return;
 	}
 
@@ -135,5 +137,11 @@ export async function httpPost(url: string | URL, data: string) {
 export async function httpGet(url: string | URL) {
 	return await fetch(url, {
 		method: "GET",
+	});
+}
+
+export async function httpDelete(url: string | URL) {
+	return await fetch(url, {
+		method: "DELETE",
 	});
 }
