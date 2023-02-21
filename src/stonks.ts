@@ -1,6 +1,7 @@
-import { NS } from "@ns";
+import { AutocompleteData, NS } from "@ns";
 import { table } from "table";
 import { money } from "./money";
+import { httpDelete, httpPut, writefile } from "./getter";
 
 const ALLOWSHORTS = false; // CAUTION: LATEST TEST (BN8.2) WITH SHORTS RESULTED IN LOSSES
 const MONEYPERCENTAGE = 0.75;
@@ -19,15 +20,33 @@ const RATES = {
 };
 let HAS4SACCESS = false;
 
+const RECORDFILENAME = "stockRecords.txt";
+
+const FLAGS: [string, string | number | boolean][] = [
+	["record", false],
+	["record-only", false],
+];
+
 export async function main(ns:NS) {
 	ns.clearLog(); ns.disableLog("ALL"); ns.tail();
+
 	if (!ns.stock.purchaseWseAccount() || !ns.stock.purchaseTixApi()) return ns.tprint("You can't buy a WSE Account or Access to the TIX API!");
+
+	const data = ns.flags(FLAGS);
+	const record = data["record"] as boolean;
+	const recordOnly = data["record-only"] as boolean;
+
 	HAS4SACCESS = ns.stock.has4SDataTIXAPI();
+
 	const doc = eval("document") as Document;
 	const hook1 = doc.getElementById("overview-extra-hook-1");
 	if (hook1 === null) throw new Error("Couldn't find hook1!");
 
 	const stocks = ns.stock.getSymbols().map(symbol => new Stock(ns, symbol));
+
+	const recorder = record ? new ForecastRecorder() : null;
+
+	if (record) await httpDelete("http://localhost:3000/api");
 
 	ns.atExit(() => {
 		hook1.innerText = "";
@@ -47,13 +66,22 @@ export async function main(ns:NS) {
 
 		stocks.forEach(stock => stock.update(ns, currentCycle === 75));
 		currentCycle %= 75;
+		
+		scriptTable(ns, stocks);
+		overviewDisplay(hook1, stocks);
+
+		if (recorder !== null) {
+			recorder.addForecast(stocks[0].forecastCalc.getCurrentRawForecast());
+
+			await writefile(ns, RECORDFILENAME, "home", JSON.stringify(recorder.forecastData, undefined, 2));
+			await httpPut("http://localhost:3000/api", JSON.stringify(recorder.forecastData.at(-1)));
+		}
+		
+		if (recordOnly) continue;
 
 		sellStocks(ns, stocks);
 		
 		if (currentCycle <= 35) buyStocks(ns, stocks, ns.getPlayer().money * MONEYPERCENTAGE);
-
-		scriptTable(ns, stocks);
-		overviewDisplay(hook1, stocks);
 
 		// Check after buying stocks, because you could have just enough to buy it, but not enough to recover
 		HAS4SACCESS = ns.stock.purchase4SMarketDataTixApi();
@@ -164,6 +192,40 @@ export function scriptTable(ns: NS, stocks: Array<Stock>) {
 	ns.resizeTail(800, 800);
 	ns.clearLog();
 	ns.print(tableString);
+}
+
+export function getAllOwnedStocks(ns: NS) {
+	const symbols = ns.stock.getSymbols();
+
+	return symbols.filter(symbol => {
+		const pos = ns.stock.getPosition(symbol);
+		return pos[0] > 0 || pos[2] > 0;
+	});
+}
+
+export class ForecastRecorder {
+	forecasts: {
+		time: number;
+		forecast: number;
+	}[];
+
+	constructor() {
+		this.forecasts = [];
+	}
+
+	addForecast(forecast: number) {
+		this.forecasts.push({
+			time: performance.now(),
+			forecast
+		});
+	}
+
+	get forecastData() {
+		return this.forecasts.map(entry => ({
+			x: entry.time,
+			y: entry.forecast
+		})).sort((a, b) => a.x - b.x);
+	}
 }
 
 export class Stock {
@@ -385,6 +447,10 @@ export class ForecastCalc {
 		return (previousForecastFlipped * this.previousForecasts.length + (currentForecast * this.currentForecasts.length)) / (this.previousForecasts.length + this.currentForecasts.length);
 	}
 
+	getCurrentRawForecast() {
+		return ForecastCalc.getForecast(this.currentForecasts);
+	}
+
 	updateFlipPercentage(increase: boolean) {
 		if (this.previousForecasts.length > 0) {
 			const previousForecast = ForecastCalc.getForecast(this.previousForecasts);
@@ -398,4 +464,8 @@ export class ForecastCalc {
 	static getForecast(forecasts: Array<boolean>) {
 		return forecasts.filter(b => b).length / forecasts.length;
 	}
+}
+
+export function autocomplete(data: AutocompleteData, _args: string[]) {
+	return [data.flags(FLAGS)];
 }
