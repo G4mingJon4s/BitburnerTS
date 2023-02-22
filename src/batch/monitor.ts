@@ -14,7 +14,7 @@ export async function main(ns: NS) {
 			"currentMoney": obj.moneyAvailable,
 		};
 
-		const tableString = table(["Key", "Value"], objectToArray(data));
+		const tableString = table([`KEY${performance ? " - PERFORMANCE" : ""}`, "Value"], objectToArray(data));
 
 		ns.clearLog();
 		ns.printf("%s", tableString);
