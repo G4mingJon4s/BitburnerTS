@@ -1,4 +1,4 @@
-import { NS, Office } from "@ns";
+import { CityName, NS, Office } from "@ns";
 
 // As of V2.1, src: game files
 export const materialSizes: Record<EMaterial, number> = {
@@ -69,7 +69,7 @@ export const JOBCOUNT = 5;
  * Buys the given materials for the given cities of the given divison once.
  * @param materials A Map, where each key is the material name and each value the amount/s to buy
  */
-export async function buyMaterials(ns: NS, divisonName: string, cities: string[], materials: Map<EMaterial, number>) {
+export async function buyMaterials(ns: NS, divisonName: string, cities: CityName[], materials: Map<EMaterial, number>) {
 	const corp = ns.corporation;
 	const materialNames = Array.from(materials.keys());
 
@@ -94,7 +94,7 @@ export async function buyMaterials(ns: NS, divisonName: string, cities: string[]
 	cities.forEach(city => materialNames.forEach(material => corp.buyMaterial(divisonName, city, material, 0)));
 }
 
-export function newEmployees(ns: NS, divisonName: string, cities: string[], count: number) {
+export function newEmployees(ns: NS, divisonName: string, cities: CityName[], count: number) {
 	const corp = ns.corporation;
 
 	const funds = corp.getCorporation().funds;
@@ -105,7 +105,7 @@ export function newEmployees(ns: NS, divisonName: string, cities: string[], coun
 	cities.forEach(city => corp.upgradeOfficeSize(divisonName, city, count));
 }
 
-export function totalEmployees(ns: NS, divisonName: string, cities: string[], size: number) {
+export function totalEmployees(ns: NS, divisonName: string, cities: CityName[], size: number) {
 	const corp = ns.corporation;
 
 	const funds = corp.getCorporation().funds;
@@ -127,13 +127,13 @@ export function totalEmployees(ns: NS, divisonName: string, cities: string[], si
 		.forEach(entry => corp.upgradeOfficeSize(divisonName, entry.city, entry.needed));
 }
 
-export async function recruit(ns: NS, divisonName: string, cities: string[]) {
+export async function recruit(ns: NS, divisonName: string, cities: CityName[]) {
 	const corp = ns.corporation;
 
 	for (const city of cities) while (corp.hireEmployee(divisonName, city, EPosition.Unassigned)) await ns.sleep(2);
 }
 
-export function assignEven(ns: NS, divisonName: string, cities: string[]) {
+export function assignEven(ns: NS, divisonName: string, cities: CityName[]) {
 	const corp = ns.corporation;
 
 	cities.forEach(city => {
@@ -145,7 +145,7 @@ export function assignEven(ns: NS, divisonName: string, cities: string[]) {
 /**
  * @param threshold e.g. 5 -> 100 on all roles, 500 (100 * 5) on science. -1 sets all to default and everyone to science
  */
-export function assignScience(ns: NS, divisonName: string, cities: string[], threshold: number) {
+export function assignScience(ns: NS, divisonName: string, cities: CityName[], threshold: number) {
 	const corp = ns.corporation;
 
 	cities.forEach(city => {
@@ -156,7 +156,7 @@ export function assignScience(ns: NS, divisonName: string, cities: string[], thr
 	});
 }
 
-export function assignDefault(ns: NS, divisonName: string, cities: string[]) {
+export function assignDefault(ns: NS, divisonName: string, cities: CityName[]) {
 	const corp = ns.corporation;
 
 	cities.forEach(city => {
@@ -168,7 +168,7 @@ export function assignDefault(ns: NS, divisonName: string, cities: string[]) {
 /**
  * @param jobCount Sorted after UI (Ops, Eng, Bus...)
  */
-export function assignCustom(ns: NS, divisonName: string, cities: string[], jobCount: number[]) {
+export function assignCustom(ns: NS, divisonName: string, cities: CityName[], jobCount: number[]) {
 	const corp = ns.corporation;
 
 	cities.forEach(city => {
@@ -183,7 +183,7 @@ export function adVert(ns: NS, divisonName: string, count: number) {
 	Array(count).fill(0).forEach(() => corp.hireAdVert(divisonName));
 }
 
-export function warehouseSize(ns: NS, divisonName: string, cities: string[], size: number) {
+export function warehouseSize(ns: NS, divisonName: string, cities: CityName[], size: number) {
 	const corp = ns.corporation;
 
 	const hasStorageResearch = corp.hasResearched(divisonName, "Drones - Transport");
@@ -228,13 +228,13 @@ export function warehouseSize(ns: NS, divisonName: string, cities: string[], siz
 	});
 }
 
-export function sell(ns: NS, divisonName: string, cities: string[], material: string, amount: string, price: string) {
+export function sell(ns: NS, divisonName: string, cities: CityName[], material: string, amount: string, price: string) {
 	const corp = ns.corporation;
 
 	cities.forEach(city => corp.sellMaterial(divisonName, city, material, amount, price));
 }
 
-export function retrieveOffice(ns: NS, divisonName: string, cities: string[], keys: (keyof Office)[]) {
+export function retrieveOffice(ns: NS, divisonName: string, cities: CityName[], keys: (keyof Office)[]) {
 	const corp = ns.corporation;
 
 	const stats = cities.map(city => {

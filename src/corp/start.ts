@@ -1,12 +1,12 @@
-import { NS } from "@ns";
-import { adVert, assignCustom, buyMaterials, EMaterial, newEmployees, recruit, retrieveOffice, sell, totalEmployees, warehouseSize } from "corp/helpers";
+import { CityName, NS } from "@ns";
+import { adVert, assignCustom, buyMaterials, EMaterial, recruit, retrieveOffice, sell, totalEmployees, warehouseSize } from "corp/helpers";
 
 // Names
 export const CORPNAME = "G4ming Inc.";
 export const AGRICULTURE = "Verdant Robotics";
 
 // Constants
-export const CITIES = ["Aevum", "Chongqing", "Sector-12", "New Tokyo", "Ishima", "Volhaven"];
+export const CITIES = ["Aevum", "Chongqing", "Sector-12", "New Tokyo", "Ishima", "Volhaven"] as CityName[];
 export const AVGSTATS = 99.5;
 export const WAITCYLCES = 5;
 export const INVESTDELAY = 10_000;
@@ -89,19 +89,19 @@ export async function setup(ns: NS) {
 	CITIES.filter(city => !corp.getDivision(AGRICULTURE).cities.includes(city)).forEach(city => corp.expandCity(AGRICULTURE, city));
 	CITIES.filter(city => !corp.hasWarehouse(AGRICULTURE, city)).forEach(city => corp.purchaseWarehouse(AGRICULTURE, city));
 	
-	await recruit(ns, AGRICULTURE, CITIES);
-	assignCustom(ns, AGRICULTURE, CITIES, [1, 1, 1]);
+	await recruit(ns, AGRICULTURE, CITIES.slice());
+	assignCustom(ns, AGRICULTURE, CITIES.slice(), [1, 1, 1]);
 
 	console.log("BONUS TIME", corp.getBonusTime());
 
-	console.log("AVGS", retrieveOffice(ns, AGRICULTURE, CITIES, ["avgMor", "avgHap", "avgEne"]));
+	console.log("AVGS", retrieveOffice(ns, AGRICULTURE, CITIES.slice(), ["avgMor", "avgHap", "avgEne"]));
 	
 	adVert(ns, AGRICULTURE, 1);
 
-	sell(ns, AGRICULTURE, CITIES, "Plants", "MAX", "MP");
-	sell(ns, AGRICULTURE, CITIES, "Food", "MAX", "MP");
+	sell(ns, AGRICULTURE, CITIES.slice(), "Plants", "MAX", "MP");
+	sell(ns, AGRICULTURE, CITIES.slice(), "Food", "MAX", "MP");
 
-	warehouseSize(ns, AGRICULTURE, CITIES, 300);
+	warehouseSize(ns, AGRICULTURE, CITIES.slice(), 300);
 }
 
 export async function buyPhase1(ns: NS) {
@@ -110,7 +110,7 @@ export async function buyPhase1(ns: NS) {
 	UPGRADES1.forEach(upgrade => corp.levelUpgrade(upgrade));
 	UPGRADES1.forEach(upgrade => corp.levelUpgrade(upgrade));
 
-	await buyMaterials(ns, AGRICULTURE, CITIES, MATERIAL1);
+	await buyMaterials(ns, AGRICULTURE, CITIES.slice(), MATERIAL1);
 }
 
 export async function awaitStats(ns: NS) {
@@ -119,7 +119,7 @@ export async function awaitStats(ns: NS) {
 	while (true) {
 		await ns.sleep(1000);
 
-		const averages = retrieveOffice(ns, AGRICULTURE, CITIES, ["avgMor", "avgHap", "avgEne"]) as number[][];
+		const averages = retrieveOffice(ns, AGRICULTURE, CITIES.slice(), ["avgMor", "avgHap", "avgEne"]) as number[][];
 
 		console.log(averages, "SHOULD BREAK:", !averages.some(average => average.some(v => v < AVGSTATS)));
 
@@ -152,21 +152,21 @@ export async function acceptInvestment(ns: NS) {
 export async function buyPhase2(ns: NS) {
 	const corp = ns.corporation;
 
-	totalEmployees(ns, AGRICULTURE, CITIES, 9);
-	await recruit(ns, AGRICULTURE, CITIES);
-	assignCustom(ns, AGRICULTURE, CITIES, [3, 2, 2, 2]);
+	totalEmployees(ns, AGRICULTURE, CITIES.slice(), 9);
+	await recruit(ns, AGRICULTURE, CITIES.slice());
+	assignCustom(ns, AGRICULTURE, CITIES.slice(), [3, 2, 2, 2]);
 
 	for (let i = 0; i < 9; i++) UPGRADES2.forEach(upgrade => corp.levelUpgrade(upgrade));
 
-	warehouseSize(ns, AGRICULTURE, CITIES, 2000);
+	warehouseSize(ns, AGRICULTURE, CITIES.slice(), 2000);
 
-	await buyMaterials(ns, AGRICULTURE, CITIES, MATERIAL2);
+	await buyMaterials(ns, AGRICULTURE, CITIES.slice(), MATERIAL2);
 }
 
 export async function buyPhase3(ns: NS) {
 	const corp = ns.corporation;
 
-	warehouseSize(ns, AGRICULTURE, CITIES, 3800);
+	warehouseSize(ns, AGRICULTURE, CITIES.slice(), 3800);
 
-	await buyMaterials(ns, AGRICULTURE, CITIES, MATERIAL3);
+	await buyMaterials(ns, AGRICULTURE, CITIES.slice(), MATERIAL3);
 }
