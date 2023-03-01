@@ -118,30 +118,30 @@ export function readFile(ns:NS, file: string, server: string, port = 1, waitingT
 	return foundData;
 }
 
-export async function httpPut(url : string | URL, data: string) {
-	return await fetch(url, {
+export function httpPut(url : string | URL, data: string) {
+	return fetch(url, {
 		method: "PUT",
 		body: data,
 		headers: { "Content-Type": "application/json; charset=utf-8" },
 	});
 }
 
-export async function httpPost(url: string | URL, data: string) {
-	return await fetch(url, {
+export function httpPost(url: string | URL, data: string) {
+	return fetch(url, {
 		method: "POST",
 		body: data,
 		headers: { "Content-Type": "application/json; charset=utf-8" },
 	});
 }
 
-export async function httpGet(url: string | URL) {
-	return await fetch(url, {
+export function httpGet(url: string | URL) {
+	return fetch(url, {
 		method: "GET",
 	});
 }
 
-export async function httpDelete(url: string | URL) {
-	return await fetch(url, {
+export function httpDelete(url: string | URL) {
+	return fetch(url, {
 		method: "DELETE",
 	});
 }
