@@ -1,33 +1,21 @@
 import { NS } from "@ns";
 
-export const TERMINALLENGTH = 235;
+export const MAXLENGTH = 200;
 
-export async function main(ns: NS): Promise<void> {
-	ns.clearLog(); ns.tail();
+export async function main(ns: NS) {
+	ns.tail();
 
-	const testData = [
-		["Look mom, I made a table", 	"to show some", "numbers: 12 123"],
-		["Or my", 										"numbers", 			"69420.187$"],
-		["Im missing something", 			"up there", 		"but I don't know what it could be", "asdasdasdasd "]
-	];
-	const testHead = ["Key", "Value", "Number"];
+	const head = ["Key", "Value", "Something"];
+	const data = [
+		["Hello", "there", "here"],
+		["are", "some", "numberssssssssssssssssss"],
+		["$54.32m", "5,123%", "123.456b€", "this", "shouldn't", "be", "here"]];
 
-	const result = table(testHead, testData, {
-		inlineHeader: false,
-		alignNumbersRight: true,
-		ml: 2,
-		mr: 2
-	});
-
-	ns.print(result);
+	const string = t(head, data);
+	console.log(string);
 }
 
-export function objectToArray(obj: Record<string, unknown>) {
-	const data = Object.entries(obj);
-	return data.map(pair => [pair[0], String(pair[1])]);
-}
-
-export function table(head: string[], data: string[][], opts: Opts = {}) {
+export function t(head: string[], data: string[][], opts: Opts = {}) {
 	const { ml = 1, mr = 1, alignNumbersRight = true, inlineHeader = false } = opts;
 	
 	// make all rows have the same number columns
@@ -71,7 +59,7 @@ export function append(a: string, b: string) {
 }
 
 export function header(head: string[], columnLengths: number[], ml: number, mr: number, alignNumbersRight: boolean, inlineHeader: boolean, fillChar = " ", border = getBorder) {
-	const headValues = head.map((string, i) => value(string, columnLengths[i], ml, mr, alignNumbersRight, inlineHeader ? border()[0][3] : fillChar));
+	const headValues = head.map((string, i) => value(string, columnLengths[i], ml, mr, alignNumbersRight, fillChar));
 	const connected = connectValues(headValues, Number(!inlineHeader), inlineHeader, border);
 	return connected;
 }
@@ -107,7 +95,7 @@ export function value(string: string, length: number, ml: number, mr: number, al
 }
 
 export function isNumber(string: string) {
-	const numberRegEx = /^[$]?-?[\d']+[.,]?\d*[tsmhkbtqQ%]?[€$]?$/;
+	const numberRegEx = /^[$]?-?[\d']+[.,]?\d*[tsmhkbtqQ%]?[€]?$/;
 
 	return numberRegEx.test(string);
 }
@@ -129,10 +117,4 @@ interface Opts {
 	mr?: number;
 	alignNumbersRight?: boolean;
 	inlineHeader?: boolean;
-}
-
-export function progressBar(percentage: number, size: number) {
-	const lit = Math.round(percentage * size);
-	const unLit = size - lit;
-	return `[${String("").padEnd(lit, "|")}${String("").padEnd(unLit, "-")}]`;
 }
