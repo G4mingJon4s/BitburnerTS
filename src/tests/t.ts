@@ -16,7 +16,7 @@ export async function main(ns: NS) {
 }
 
 export function t(head: string[], data: string[][], opts: Opts = {}) {
-	const { ml = 1, mr = 1, alignNumbersRight = true, inlineHeader = false } = opts;
+	const { ml = 1, mr = 1, alignNumbersRight = true, inlineHeader = false, middleDivider: withMiddleDivider = false } = opts;
 	
 	// make all rows have the same number columns
 	const columnCount = data.reduce((acc, cur) => Math.max(acc, cur.length), head.length);
@@ -43,7 +43,7 @@ export function t(head: string[], data: string[][], opts: Opts = {}) {
 	const bottomDivider = divider(columnLengths, 2, ml, mr, getBorder);
 
 	const combinedHead = inlineHeader ? headerString : [topDivider, headerString, middleDivider].reduce(append);
-	const combinedData = rowStrings.join("\n" + middleDivider + "\n");
+	const combinedData = rowStrings.join("\n" + (withMiddleDivider ? middleDivider + "\n" : ""));
 
 	const combinedString = [combinedHead, combinedData, bottomDivider].reduce(append);
 
@@ -117,4 +117,5 @@ interface Opts {
 	mr?: number;
 	alignNumbersRight?: boolean;
 	inlineHeader?: boolean;
+	middleDivider?: boolean;
 }
