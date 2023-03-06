@@ -25,5 +25,6 @@ export function mapHosts(ns: NS, hosts: string[], ramPerThread: number, maxThrea
 }
 
 export async function waitPids(ns: NS, pids: number[]) {
+	await ns.sleep(10); // this ensures any `while (true) await waitPids();` do not end in a unstopable loop
 	while (pids.some(pid => ns.isRunning(pid))) await ns.sleep(10);
 }
