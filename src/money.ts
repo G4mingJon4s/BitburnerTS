@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { table } from "./table";
+import { table } from "table";
 
 export async function main(ns: NS) {
 	const sources = ns.getMoneySources();
@@ -43,7 +43,50 @@ export function money(money: number, digits: number) {
 	return (minus ? "-" : "") + (item ? (money / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0");
 }
 
-export function tFormatter(ticks: number, simple = true) {
+export const ramRegex = /(\d+[.,]?\d*)\s?([GTP]B)/;
+
+/**
+ * Returns `Number.NaN`, if it can't parse the string
+ */
+export function getRam(string: string) {
+	const captured = ramRegex.exec(string);
+	if (captured === null) return Number.NaN;
+	const number = Number(captured[1].replaceAll(",", "")); // for de-DE number e.g. 420,69 -> 420.69
+	const suffix = captured[2];
+	const suffixValue = suffix === "GB" ? 1 : suffix === "TB" ? 1024 : 1048576;
+	return suffixValue * number;
+}
+
+export function ram(number: number) {
+	const minus = number < 0;
+	if (minus) number = -1 * number;
+
+	const lookup = [
+		{
+			value: 1,
+			symbol: "GB"
+		},{
+			value: 1024,
+			symbol: "TB"
+		},{
+			value: 1048576,
+			symbol: "PB"
+		},
+	];
+
+	const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+	
+	const item = lookup
+		.slice()
+		.reverse()
+		.find(function (item) {
+			return number >= item.value;
+		});
+
+	return (minus ? "-" : "") + (item ? (number / item.value).toFixed(20).replace(rx, "$1") + item.symbol : "0GB");
+}
+
+export function time(ticks: number, simple = true) {
 	if (simple) return `${(ticks / 1000).toFixed(2)}s`;
 	
 	const date = new Date(ticks);
