@@ -3,7 +3,7 @@ import { table } from "table";
 import { money } from "money";
 import { getHosts, mapHosts, waitPids } from "server";
 
-export const CHARGEFILE = "charge.js";
+export const CHARGEFILE = "stanek/charge.js";
 export const IGNOREDHOSTS = ["home"];
 
 export async function main(ns: NS) {
