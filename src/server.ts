@@ -1,8 +1,9 @@
 import { NS } from "@ns";
 import { getAllServers } from "network.js";
+import { getRam, money, ram, ramRegex } from "money.js";
 
 export async function main(ns: NS) {
-	ns.tprint(getHosts(ns, ns.args[0] as number ?? 0));
+	await manualServerBuy(ns);
 }
 
 export function getHosts(ns: NS, ramPerThread: number, ignored: string[] = []) {
@@ -27,4 +28,26 @@ export function mapHosts(ns: NS, hosts: string[], ramPerThread: number, maxThrea
 export async function waitPids(ns: NS, pids: number[]) {
 	await ns.sleep(10); // this ensures any `while (true) await waitPids();` do not end in a unstopable loop
 	while (pids.some(pid => ns.isRunning(pid))) await ns.sleep(10);
+}
+
+export async function manualServerBuy(ns: NS) {
+	const ownedServers = ns.getPurchasedServers();
+
+	if (ownedServers.length >= ns.getPurchasedServerLimit()) return ns.alert(`You already have ${ns.getPurchasedServerLimit()} servers!`);
+
+	const allRamValues = Array(Math.log2(ns.getPurchasedServerMaxRam())).fill(0).map((_, i) => Math.pow(2, i + 1));
+
+	const name = `pserv-${ownedServers.length + 1}`;
+
+	const chosenRam = await ns.prompt("Choose a ram value", {
+		type: "select",
+		choices: allRamValues.map(n => ram(n))
+	}) as string;
+
+	const ramValue = getRam(chosenRam);
+	if (Number.isNaN(ramValue)) return ns.alert(`Can't parse your ram choice of "${chosenRam}"`);
+
+	const finalName = ns.purchaseServer(name, ramValue);
+	if (finalName.length === 0) return ns.alert(`Failed to buy "${name}" with "${chosenRam}" for $${money(ns.getPurchasedServerCost(ramValue), 2)}`);
+	return ns.alert(`Bought "${name}" with "${chosenRam}" for $${money(ns.getPurchasedServerCost(ramValue), 2)}`);
 }
