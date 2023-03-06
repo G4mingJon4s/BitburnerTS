@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { getAllServers } from "./network";
+import { getAllServers } from "network.js";
 
 export async function main(ns: NS) {
 	ns.tprint(getHosts(ns, ns.args[0] as number ?? 0));

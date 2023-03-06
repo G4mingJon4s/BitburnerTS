@@ -1,9 +1,9 @@
 import { ActiveFragment, NS } from "@ns";
-import { table } from "table";
-import { money } from "money";
-import { getHosts, mapHosts, waitPids } from "server";
+import { table } from "table.js";
+import { money } from "money.js";
+import { getHosts, mapHosts, waitPids } from "server.js";
 
-export const CHARGEFILE = "stanek/charge.js";
+export const CHARGEFILE = "/stanek/charge.js";
 export const IGNOREDHOSTS = ["home"];
 
 export async function main(ns: NS) {
