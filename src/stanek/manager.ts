@@ -21,7 +21,7 @@ export async function main(ns: NS) {
 	const data = ns.flags(FLAGS);
 	const killWorkers = data["killWorkers"] as boolean;
 
-	const allServers = getAllServers(ns).filter(s => IGNOREDHOSTS.includes(s));
+	const allServers = getAllServers(ns).filter(s => !IGNOREDHOSTS.includes(s));
 
 	if (killWorkers) return void allServers.map(s => ns.scriptKill(WORKERFILE, s));
 
