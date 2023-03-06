@@ -145,3 +145,14 @@ export function httpDelete(url: string | URL) {
 		method: "DELETE",
 	});
 }
+
+/**
+ * Nullifies any errors a promise might throw, no need for `await`
+ */
+export async function errorBoundry<T>(promise: Promise<T>) {
+	try {
+		return await promise;
+	} catch (e) {
+		return console.log(e);
+	}
+}
