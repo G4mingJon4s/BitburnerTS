@@ -1,7 +1,7 @@
 import { ActiveFragment, NS } from "@ns";
 import { table } from "table";
 import { money } from "money";
-import { getHosts, mapHosts, waitPids } from "./server";
+import { getHosts, mapHosts, waitPids } from "server";
 
 export const CHARGEFILE = "charge.js";
 export const IGNOREDHOSTS = ["home"];
