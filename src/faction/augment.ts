@@ -1,5 +1,6 @@
 import { AutocompleteData, Multipliers, NS } from "@ns";
 import { table } from "/table";
+import { getAllFactions } from "faction/factions";
 
 const FLAGS: [string, string | number | boolean][] = [
 	["hacking", false],
@@ -27,7 +28,7 @@ export async function main(ns: NS) {
 
 	if (focus.every(a => !a[1])) return ns.alert("Specify a focus! You can specify one with --hacking, --combat or --misc!");
 
-	const all = allAugs(ns, focus).sort((a, b) => ns.singularity.getAugmentationPrice(a) - ns.singularity.getAugmentationPrice(b));
+	const all = allAugs(ns, focus, getAllFactions()).sort((a, b) => ns.singularity.getAugmentationPrice(a) - ns.singularity.getAugmentationPrice(b));
 
 	const final: [string, [string, number][]][] = all.map(aug => [aug, getMults(ns.singularity.getAugmentationStats(aug))]);
 	const tableData = final.map(a => a.map(b => {
