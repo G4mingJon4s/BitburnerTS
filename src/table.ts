@@ -54,10 +54,10 @@ export function table(head: string[], data: string[][], opts: Opts = {}) {
 	const middleDivider = divider(columnLengths, 1, ml, mr, getBorder);
 	const bottomDivider = divider(columnLengths, 2, ml, mr, getBorder);
 
-	const combinedHead = inlineHeader ? headerString : [topDivider, headerString, middleDivider].reduce(append);
-	const combinedData = rowStrings.join("\n" + (withMiddleDivider ? middleDivider + "\n" : ""));
+	const combinedHead = inlineHeader ? headerString.slice(0, Math.min(TERMINALLENGTH, headerString.length)) : [topDivider, headerString, middleDivider].map(s => s.slice(0, Math.min(TERMINALLENGTH, s.length))).reduce(append);
+	const combinedData = rowStrings.map(s => s.slice(0, Math.min(TERMINALLENGTH, s.length))).join("\n" + (withMiddleDivider ? middleDivider + "\n" : ""));
 
-	const combinedString = [combinedHead, combinedData, bottomDivider].reduce(append);
+	const combinedString = [combinedHead, combinedData, bottomDivider.slice(0, Math.min(TERMINALLENGTH, bottomDivider.length))].reduce(append);
 
 	return combinedString;
 }
