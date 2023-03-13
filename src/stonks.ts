@@ -3,10 +3,10 @@ import { table } from "table";
 import { money } from "./money";
 import { httpDelete, httpPut, writefile } from "./getter";
 
-const ALLOWSHORTS = false; // CAUTION: LATEST TEST (BN8.2) WITH SHORTS RESULTED IN LOSSES
+const ALLOWSHORTS = true; // CAUTION: LATEST TEST (BN8.2) WITH SHORTS RESULTED IN LOSSES
 const MONEYPERCENTAGE = 0.75;
-const MINPURCHASE = 5_000_000;
-const MAXPURCHASE = 10_000_000_000_000;
+const MINPURCHASE = 1_000_000;
+const MAXPURCHASE = Number.MAX_SAFE_INTEGER;
 const TRANSACTION = 100_000;
 const RATES = {
 	short: {
@@ -243,6 +243,7 @@ export class Stock {
 	bidPrice: number;	// Bid price of the stock, NOT NEEDED
 	averagePrice: number;	// price of the stock
 	profit: number;	// profit of the stock
+	priceOnBuy: number;
 
 	maxShares: number; // max shares of the stock
 	
@@ -267,6 +268,7 @@ export class Stock {
 		this.askPrice = ns.stock.getAskPrice(symbol);
 		this.bidPrice = ns.stock.getBidPrice(symbol);
 		this.averagePrice = ns.stock.getPrice(symbol);
+		this.priceOnBuy = Number.NaN;
 		
 		this.maxShares = ns.stock.getMaxShares(symbol);
 		
@@ -347,6 +349,7 @@ export class Stock {
 
 		// Update the buy data
 		this.boughtThisCycle = true;
+		this.priceOnBuy = price;
 	}
 
 	sell(ns: NS) {
@@ -369,6 +372,7 @@ export class Stock {
 
 		// Update the buy data
 		this.boughtThisCycle = false;
+		this.priceOnBuy = Number.NaN;
 	}
 
 	get ownsShares() {
@@ -384,7 +388,7 @@ export class Stock {
 			this.volatility *
 			Math.pow(Math.abs(this.forecast - 0.5), 1.25) *
 			(this.forecast > 0.5 ? 1.1 : 1) *
-			(this.longShares - this.shortShares >= 0 ? 1 : Math.min(1, this.averagePrice / this.longPrice))
+			(this.longShares - this.shortShares >= 0 ? 1 : Math.min(1, this.averagePrice / this.priceOnBuy))
 		);
 	}
 }
