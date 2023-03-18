@@ -10,14 +10,21 @@ export function RLEEncode(string: string) {
 			out += char;
 			char = arr[i];
 			count = 1;
+
+			if (i + 1 >= arr.length) {
+				out += count;
+				out += char;
+				break;
+			}
+
 			continue;
 		}
-		count++;
 		if (i + 1 >= arr.length) {
-			out += count;
+			out += count + 1;
 			out += char;
 			break;
 		}
+		count++;
 	}
 	return out;
 }
