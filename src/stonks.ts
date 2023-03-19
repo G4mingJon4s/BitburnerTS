@@ -353,7 +353,7 @@ export class Stock {
 	}
 
 	sell(ns: NS) {
-		if (!this.allowed) return console.error("Trying to buy shares without permission!");
+		if (!this.allowed) return console.error("Trying to sell shares without permission!");
 		if (this.longShares > 0) {
 			const price = ns.stock.sellStock(this.symbol, this.longShares);
 			console.log(`Sold ${this.longShares.toExponential(2)} shares of ${this.symbol} at $${money(price, 2)}`);
