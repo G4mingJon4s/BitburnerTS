@@ -58,8 +58,8 @@ export async function main(ns:NS) {
 
 		if (!noBuy) buyEquipments(ns, members, ns.getPlayer().money * 0.8, getDiscount(ns) > 0.3);
 		
-		if (gangInfo.territory < 1 && warfareTick + checkBack < ns.getTimeSinceLastAug() + 500) {
-			if (SHOWCLASHONHOCK) hook0.innerText = "Gang clash now ";
+		if (gangInfo.territory < 1 && warfareTick + checkBack < ns.getTimeSinceLastAug() + 800) {
+			if (SHOWCLASHONHOCK) hook0.innerText = "Gang clash now";
 			
 			const clashAllowed = canClash(ns);
 			ns.gang.setTerritoryWarfare(clashAllowed);
