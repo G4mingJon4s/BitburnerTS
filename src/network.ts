@@ -6,6 +6,7 @@
 import type { AutocompleteData, NS } from "@ns";
 
 export const FILENAME = "network.js";
+export const HACKNETREGEX = /^hacknet-server-\d+$/;
 
 export async function main(ns: NS) {
 	const mode = ns.args[0] as (string | boolean) ?? false;
@@ -16,7 +17,7 @@ export async function main(ns: NS) {
 		return path.forEach(server => ns.singularity.connect(server));
 	}
 
-	const allServers = getAllServers(ns);
+	const allServers = getAllServers(ns).filter(s => !HACKNETREGEX.test(s));
 	
 	const hacked = allServers.reduce((acc, server) => acc + Number(hackServer(ns, server)), 0);
 
