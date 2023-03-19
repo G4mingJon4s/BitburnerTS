@@ -1,14 +1,14 @@
 import { NS } from "@ns";
 import { calculateGrowThreads } from "batch/lambert";
-import { money } from "/money";
-import { errorBoundry, httpPost } from "/getter";
+import { money } from "money";
 
 export const SPACER = 50;
 export const WINDOW = SPACER * 4;
 export const FINISHORDER = "H W1G W2";
 export const BASETOLERANCE = SPACER - 10;
 
-export const TASKFILE = "/batch/task.js";
+export const TASKFILE = "batch/task.js";
+export const BATCHFILE = "batch/batch.js";
 
 export function getCalculations(ns: NS, target: string, hackP: number, hostName = ns.getHostname()) {
 	const scriptCost = 1.75; // hack is also 1.75, because task.ts does some shenanigans to get all operations to cost the same
@@ -110,116 +110,35 @@ export function getUsedTaskRam(ns: NS, server: string) {
 	return taskScripts.length * ns.getScriptRam(TASKFILE);
 }
 
-export const MONITORTASKURL = "http://localhost:3000/api/restTask/single";
-
-export function sendTask(task: Task) {
-	const stringified = JSON.stringify(omitTaskProperties(task));
-
-	void errorBoundry(httpPost(MONITORTASKURL, stringified));
+export function getFreeRam(ns: NS, server: string) {
+	return ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
 }
 
-export function omitTaskProperties(task: Task) {
-	const invalid = ["func", "args", "started", "finished", "pid"] as const;
-
-	return Object.fromEntries(Object.entries(task).filter(pair => !(invalid as unknown as string[]).includes(pair[0]))) as Omit<Task, keyof typeof invalid>;
+export function isPrepped(ns: NS, server: string) {
+	const object = ns.getServer(server);
+	return object.minDifficulty === object.hackDifficulty && object.moneyMax === object.moneyAvailable;
 }
 
-export class Task {
-	id: number;
-	batch: number;
-	type: string;
-	desc: string;
-	time: number;
-	tolerance: number;
-	func: (ctx: { id: number; batch: number; type: string; }, ...args: never[]) => number;
-	args: never[];
-	aborted: boolean;
-	start: number;
-	end: number;
-	cost: number;
-	pid: number;
-	started: boolean;
-	finished: boolean;
-
-	/**
-	 * @param type The type of the task, can be "H ", "W1", "G ", "W2" or "BA"
-	 * @param time Absolute time, when to start, not duration of task
-	 * @param func The function to run, when starting. Should return the pid of the running script. If no script is being executed, return -1.
-	 * @param args The args of the function
-	 */
-	constructor(batch: number, type: string | "H " | "W1" | "G " | "W2" | "BA", time: number, tolerance: number, cost: number, func: (ctx: { id: number; batch: number; type: string; }, ...args: never[]) => number, args: never[]) {
-		this.id = Date.now();
-		this.batch = batch;
-		this.type = type;
-		this.desc = `${batch}.${type.trim()}`;
-		this.time = time;
-		this.tolerance = tolerance;
-		this.func = func;
-		this.args = args;
-		this.aborted = false;
-		this.start = NaN;
-		this.end = NaN;
-		this.cost = cost;
-		this.pid = NaN;
-		this.started = false;
-		this.finished = false;
-	}
-
-	run() {
-		this.start = Date.now();
-		this.started = true;
-		this.pid = this.func({
-			id: this.id,
-			batch: this.batch,
-			type: this.type
-		}, ...this.args);
-
-		RamReserver.free(this.cost);
-		console.log(`Started Task of Batch #${this.batch} with type "${this.type}"`);
-	}
-
-	stop(ns: NS, report?: Report) {
-		this.end = Date.now();
-		this.finished = true;
-
-		ns.print(`${this.batch}-${this.type} Finished`);
-
-		if (report === undefined) return sendTask(this);
-
-		this.start = report.start;
-		this.end = report.end;
-
-		console.log(report);
-		
-		return sendTask(this);
-	}
-
-	abort(ns: NS, reason = "") {
-		if (ns.isRunning(this.pid)) ns.kill(this.pid);
-		this.aborted = true;
-
-		RamReserver.free(this.cost);
-
-		console.warn(`Aborted Task of Batch #${this.batch} with type "${this.type}". Reason: "${reason.length === 0 ? "No Reason named" : reason}"`);
-	}
-}
-
-export class RamReserver {
-	static reservedRam = 0;
-
-	static malloc(number: number) {
-		RamReserver.reservedRam += number;
-	}
-
-	static free(number: number) {
-		RamReserver.reservedRam -= number;
-	}
-}
-
-export interface Report {
-	descriptor: "REPORT";
+export interface TaskReport {
+	descriptor: "TASK-REPORT";
 	id: number;
 	type: string;
 	start: number;
 	end: number;
+	delay: number;
+}
+
+export interface BatchReport {
+	descriptor: "BATCH-REPORT";
+	id: number;
+	order: string;
+	reports: TaskReport[];
+}
+
+export function isTaskReport(obj: unknown): obj is TaskReport {
+	return obj !== null && typeof obj === "object" && "descriptor" in obj && obj.descriptor === "TASK-REPORT";
+}
+
+export function isBatchReport(obj: unknown): obj is BatchReport {
+	return obj !== null && typeof obj === "object" && "descriptor" in obj && obj.descriptor === "BATCH-REPORT";
 }
