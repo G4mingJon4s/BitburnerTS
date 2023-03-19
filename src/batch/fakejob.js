@@ -1,6 +1,6 @@
 /** @param {NS} ns */
 export async function main(ns) {
-	if (false) ns.grow;
+	if (false) ns.codingcontract.attempt;
 
 	const [id, type, duration, port = null] = ns.args;
 

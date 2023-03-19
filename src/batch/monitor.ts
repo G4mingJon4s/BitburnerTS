@@ -1,24 +1,31 @@
-import { NS } from "@ns";
-import { objectToArray, table } from "/table";
+import { NS, Server } from "@ns";
+import { httpPost } from "/getter";
+import { getAllServers } from "/network";
+
+export const MONITORURL = "http://localhost:3000/api/restServer/multiple";
 
 export async function main(ns: NS) {
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
-	const [server, performance] = ns.args as [string, boolean];
 
 	while (true) {
-		const obj = ns.getServer(server);
-		const data = {
-			"minDifficulty": obj.minDifficulty,
-			"currentDifficulty": obj.hackDifficulty,
-			"maxMoney": obj.moneyMax,
-			"currentMoney": obj.moneyAvailable,
-		};
+		const servers = getAllServers(ns);
+		const omittedServers = servers.map(ns.getServer).map(omitServerProperties);
 
-		const tableString = table([`KEY${performance ? " - PERFORMANCE" : ""}`, "Value"], objectToArray(data));
+		try {
+			await httpPost(MONITORURL, JSON.stringify(omittedServers));
+		} catch (e) {
+			console.log(e);
+		}
 
 		ns.clearLog();
-		ns.printf("%s", tableString);
-		if (performance) ns.resizeTail(600, 200);
-		await ns.asleep(200);
+		ns.printf(`Last update: ${new Date().toUTCString()}`);
+
+		await ns.asleep(1000);
 	}
+}
+
+export function omitServerProperties(obj: Server) {
+	const invalid = ["contracts", "messages", "programs", "runningScripts", "scripts", "serversOnNetwork", "textFiles"] as const;
+
+	return Object.fromEntries(Object.entries(obj).filter(pair => !(invalid as unknown as string[]).includes(pair[0]))) as Omit<Server, keyof typeof invalid>;
 }

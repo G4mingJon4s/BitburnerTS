@@ -42,7 +42,7 @@ export async function main(ns: NS) {
 			const { totalRamCost } = getCalculations(ns, TARGET, HACKP);
 			if (totalRamCost < getFreeRam(ns, ns.getHostname()) - reservedRam) {
 				const id = batchId++;
-				schedule.addTasks(new Task(-1, id, Operations[4], nextBatch, totalRamCost, BASETOLERANCE, () => new Batch(id).createTasks(ns, schedule), []));
+				schedule.addTasks(new Task(id, Operations[4], nextBatch, totalRamCost, BASETOLERANCE, () => new Batch(id).createTasks(ns, schedule), []));
 
 				reservedRam += totalRamCost;
 			} else {
@@ -83,7 +83,7 @@ export class Schedule {
 		const now = performance.now();
 		this.drift = now - this.lastProcess;
 
-		const tasks = this.tasks.filter(task => task.time <= now && Number.isNaN(task.started) && !task.aborted);
+		const tasks = this.tasks.filter(task => task.time <= now && Number.isNaN(task.start) && !task.aborted);
 
 		const dismissedBatches = new Array<number>();
 
@@ -93,7 +93,7 @@ export class Schedule {
 				continue;
 			}
 
-			task.started = now;
+			task.start = now;
 
 			const taskDrift = now - task.time;
 
@@ -103,7 +103,7 @@ export class Schedule {
 				continue;
 			}
 
-			const pid = task.start();
+			const pid = task.run();
 			if (pid === -1) {
 				if (task.type !== Operations[4]) {
 					this.getBatch(task.batch).isPrep = true;
@@ -172,7 +172,7 @@ export class Schedule {
 		const dismissedTasks = new Array<Task>();
 		for (const task of this.tasks) {
 			console.log(new Date(task.time).toUTCString(), new Date(performance.now()).toUTCString(), new Date(task.time - performance.now()).toUTCString());
-			if (task.aborted || !Number.isNaN(task.started) || task.time + task.tolerance < performance.now()) {
+			if (task.aborted || !Number.isNaN(task.start) || task.time + task.tolerance < performance.now()) {
 				dismissedTasks.push(task);
 				continue;
 			}
@@ -266,7 +266,8 @@ export class Task {
 	func: (...args: never[]) => number;
 	args: never[];
 	aborted: boolean;
-	started: number;
+	start: number;
+	end: number;
 	cost: number;
 	isFinished: boolean;
 
@@ -276,8 +277,8 @@ export class Task {
 	 * @param func The function to run, when starting. Should return the pid of the running script. If no script is being executed, return -1.
 	 * @param args The args of the function
 	 */
-	constructor(id: number, batch: number, type: string, time: number, cost: number, tolerance: number, func: (...args: never[]) => number, args: never[]) {
-		this.id = id;
+	constructor(batch: number, type: string, time: number, cost: number, tolerance: number, func: (...args: never[]) => number, args: never[]) {
+		this.id = Date.now();
 		this.batch = batch;
 		this.type = type;
 		this.desc = `${batch}.${type.trim()}`;
@@ -286,12 +287,13 @@ export class Task {
 		this.func = func;
 		this.args = args;
 		this.aborted = false;
-		this.started = NaN;
+		this.start = NaN;
+		this.end = NaN;
 		this.cost = cost;
 		this.isFinished = false;
 	}
 
-	start() {
+	run() {
 		reservedRam -= this.cost;
 		this.isFinished = true;
 		return this.func(...this.args);
@@ -354,10 +356,10 @@ export class Batch {
 		const start = performance.now();
 
 		const tasks: Task[] = [
-			new Task(0, this.id, Operations[0], start + startHack, hackCost, BASETOLERANCE, () => startTask(ns, Operations[0], this.id, TARGET, PORT, hackThreads), []),
-			new Task(1, this.id, Operations[1], start, weaken1Cost, BASETOLERANCE, () => startTask(ns, Operations[1], this.id, TARGET, PORT, weaken1Threads), []),
-			new Task(2, this.id, Operations[2], start + startGrow, growCost, BASETOLERANCE, () => startTask(ns, Operations[2], this.id, TARGET, PORT, growThreads), []),
-			new Task(3, this.id, Operations[3], start + startWeaken2, weaken2Cost, BASETOLERANCE, () => startTask(ns, Operations[3], this.id, TARGET, PORT, weaken2Threads), []),
+			new Task(this.id, Operations[0], start + startHack, hackCost, BASETOLERANCE, () => startTask(ns, Operations[0], this.id, TARGET, PORT, hackThreads), []),
+			new Task(this.id, Operations[1], start, weaken1Cost, BASETOLERANCE, () => startTask(ns, Operations[1], this.id, TARGET, PORT, weaken1Threads), []),
+			new Task(this.id, Operations[2], start + startGrow, growCost, BASETOLERANCE, () => startTask(ns, Operations[2], this.id, TARGET, PORT, growThreads), []),
+			new Task(this.id, Operations[3], start + startWeaken2, weaken2Cost, BASETOLERANCE, () => startTask(ns, Operations[3], this.id, TARGET, PORT, weaken2Threads), []),
 		];
 
 		reservedRam += totalRamCost;
@@ -392,3 +394,10 @@ export enum Operations {
 	"W2" = 3,
 	"BA" = 4,
 }
+
+/*
+TODO:
+
+1. Add some kind of way to track the end of a task and add to it (archive????)
+
+*/
