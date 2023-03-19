@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-fallthrough */
-import { AutocompleteData, NS } from "@ns";
+import type { AutocompleteData, NS } from "@ns";
 
 export const FILENAME = "network.js";
 
@@ -47,11 +47,11 @@ export function hackServer(ns: NS, server: string) {
 	if (ns.hasRootAccess(server)) return false;
 
 	switch (ns.getServerNumPortsRequired(server)) {
-	case 5: if (ns.fileExists("SQLInject.exe")) { ns.sqlinject(server); } else { break; }
-	case 4: if (ns.fileExists("HTTPWorm.exe" )) { ns.httpworm(server); } else { break; }
-	case 3: if (ns.fileExists("relaySMTP.exe")) { ns.relaysmtp(server); } else { break; }
-	case 2: if (ns.fileExists("FTPCrack.exe" )) { ns.ftpcrack(server); } else { break; }
-	case 1: if (ns.fileExists("BruteSSH.exe" )) { ns.brutessh(server); } else { break; }
+	case 5: if (ns.fileExists("SQLInject.exe")) { ns.sqlinject(server); }
+	case 4: if (ns.fileExists("HTTPWorm.exe" )) { ns.httpworm(server); }
+	case 3: if (ns.fileExists("relaySMTP.exe")) { ns.relaysmtp(server); }
+	case 2: if (ns.fileExists("FTPCrack.exe" )) { ns.ftpcrack(server); }
+	case 1: if (ns.fileExists("BruteSSH.exe" )) { ns.brutessh(server); }
 	default: try { ns.nuke(server); } catch { break; }
 	}
 
