@@ -4,15 +4,18 @@ import { money } from "money.js";
 import { getHosts, mapHosts, waitPids } from "server.js";
 
 export const CHARGEFILE = "/stanek/charge.js";
-export const IGNOREDHOSTS = ["home"];
+// export const IGNOREDHOSTS = ["home", /^hacknet-server-\d$/]; // removed due to BN9 run
+export const IGNOREDHOSTS: string[] = [];
 
 export async function main(ns: NS) {
+	const additional = ns.args as string[];
+
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
 
 	const allFrags = getChargeableFrags(ns);
 
 	while (true) {
-		const pids = launchCharge(ns, allFrags);
+		const pids = launchCharge(ns, allFrags, [...IGNOREDHOSTS, ...additional]);
 
 		await waitPids(ns, pids);
 
@@ -34,8 +37,8 @@ export function display(ns: NS) {
 	ns.printf("%s", tableString);
 }
 
-export function launchCharge(ns: NS, allFrags: ActiveFragment[]) {
-	const hosts = getHosts(ns, ns.getScriptRam(CHARGEFILE) * allFrags.length, IGNOREDHOSTS);
+export function launchCharge(ns: NS, allFrags: ActiveFragment[], invalidHosts: string[] = []) {
+	const hosts = getHosts(ns, ns.getScriptRam(CHARGEFILE) * allFrags.length, invalidHosts);
 
 	hosts.forEach(host => ns.scp(CHARGEFILE, host, "home"));
 
