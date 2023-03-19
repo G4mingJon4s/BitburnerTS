@@ -22,27 +22,36 @@ export const PREFERENCES = new Map<string, string[]>([
 	["blade",		["bladeburner_analysis", "bladeburner_max_stamina", "bladeburner_stamina_gain", "bladeburner_success_chance"]],
 ]);
 
+export const MAXSHOWNSOURCES = 3;
+export const UNWANTEDAUGS = ["NeuroFlux Governor"];
+
 export async function main(ns: NS) {
 	const data = ns.flags(FLAGS);
 	const focus = (Object.entries(data) as [string, boolean][]).filter(a => a[0] !== "_").filter(a => a[1]).map(a => a[0]);
 
 	if (focus.every(a => !a[1])) return ns.alert("Specify a focus! You can specify one with --hacking, --combat or --misc!");
 
-	const all = allAugs(ns, focus, getAllFactions()).sort((a, b) => ns.singularity.getAugmentationPrice(a) - ns.singularity.getAugmentationPrice(b));
+	const all = allAugs(ns, focus, getAllFactions()).filter(a => !UNWANTEDAUGS.includes(a)).sort((a, b) => ns.singularity.getAugmentationPrice(a) - ns.singularity.getAugmentationPrice(b));
 
-	const final: [string, [string, number][]][] = all.map(aug => [aug, getMults(ns.singularity.getAugmentationStats(aug))]);
-	const tableData = final.map(a => a.map(b => {
-		if (typeof b === "string") return b;
-		return b.map(c => `${c[0]}: ${c[1]}`).join(", ");
-	}));
+	const final: [string, string[], [string, number][]][] = all.map(aug => [aug, getSources(ns, aug), getMults(ns.singularity.getAugmentationStats(aug))]);
+	const tableData = final.map(a => [a[0], a[1].slice(0, MAXSHOWNSOURCES).join(", "), a[2].map(c => `${c[0]}: ${c[1]}`).join(", ")]);
 
-	ns.tprintf("%s", table(["Augment", "Value"], tableData));
+	ns.tprintf("%s", table(["Augment", "Source", "Value"], tableData));
 }
 
 export function getMults(augMults: Multipliers) {
 	const entries = Object.entries(augMults) as [string, number][];
 	const different = entries.filter(a => a[1] !== 1);
 	return different;
+}
+
+export function getSources(ns: NS, augment: string, factions = getAllFactions()) {
+	const allAugs = factions.map(f => ({
+		f,
+		a: ns.singularity.getAugmentationsFromFaction(f)
+	}));
+	const allSources = allAugs.filter(o => o.a.includes(augment));
+	return allSources.map(o => o.f);
 }
 
 export function allAugs(ns: NS, focuses: string[], factions = ns.getPlayer().factions) {
