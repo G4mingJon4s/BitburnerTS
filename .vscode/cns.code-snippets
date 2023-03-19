@@ -23,7 +23,7 @@
 		],
 		"scope": "typescript",
 		"body": [
-			"import { NS } from \"@ns\";",
+			"import type { NS } from \"@ns\";",
 			"",
 			"export const type = \"${TM_FILENAME_BASE/\\$/:/g}\";",
 			"export const TESTAMT = 100;",

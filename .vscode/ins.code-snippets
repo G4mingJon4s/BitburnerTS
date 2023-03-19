@@ -22,7 +22,7 @@
 		],
 		"scope": "typescript",
 		"body": [
-			"import { NS } from \"@ns\";",
+			"import type { NS } from \"@ns\";",
 		]
 	}
 }

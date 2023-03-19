@@ -22,7 +22,7 @@
 		],
 		"scope": "typescript",
 		"body": [
-			"import { AutocompleteData, NS } from \"@ns\";",
+			"import type { AutocompleteData, NS } from \"@ns\";",
 			"",
 			"const FLAGS: [string, string | number | boolean][] = [",
 			"\t[\"${test}\", false],",
