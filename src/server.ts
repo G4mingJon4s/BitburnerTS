@@ -1,13 +1,13 @@
 import { NS } from "@ns";
 import { getAllServers } from "network.js";
-import { getRam, money, ram, ramRegex } from "money.js";
+import { getRam, money, ram } from "money.js";
 
 export async function main(ns: NS) {
 	await manualServerBuy(ns);
 }
 
-export function getHosts(ns: NS, ramPerThread: number, ignored: string[] = []) {
-	const allServers = getAllServers(ns).filter(s => !ignored.includes(s));
+export function getHosts(ns: NS, ramPerThread: number, ignored: (string | RegExp)[] = []) {
+	const allServers = getAllServers(ns).filter(s => !ignored.some(h => typeof h === "string" ? s === h : h.test(s)));
 	const rooted = allServers.filter(s => ns.hasRootAccess(s));
 	const enoughRam = rooted.filter(s => ns.getServerMaxRam(s) > ramPerThread);
 	return enoughRam;
