@@ -1,9 +1,8 @@
-import { AutocompleteData, NS } from "@ns";
+import { NS } from "@ns";
 import { table } from "table";
-import { money } from "./money";
-import { httpDelete, httpPut, writefile } from "./getter";
+import { money } from "money";
 
-const ALLOWSHORTS = true; // CAUTION: LATEST TEST (BN8.2) WITH SHORTS RESULTED IN LOSSES
+const ALLOWSHORTS = true; // CAUTION: LATEST TEST (BN9.1) WITH SHORTS RESULTED IN LOSSES
 const MONEYPERCENTAGE = 0.75;
 const MINPURCHASE = 1_000_000;
 const MAXPURCHASE = Number.MAX_SAFE_INTEGER;
@@ -20,21 +19,10 @@ const RATES = {
 };
 let HAS4SACCESS = false;
 
-const RECORDFILENAME = "stockRecords.txt";
-
-const FLAGS: [string, string | number | boolean][] = [
-	["record", false],
-	["record-only", false],
-];
-
 export async function main(ns:NS) {
 	ns.clearLog(); ns.disableLog("ALL"); ns.tail();
 
 	if (!ns.stock.purchaseWseAccount() || !ns.stock.purchaseTixApi()) return ns.tprint("You can't buy a WSE Account or Access to the TIX API!");
-
-	const data = ns.flags(FLAGS);
-	const record = data["record"] as boolean;
-	const recordOnly = data["record-only"] as boolean;
 
 	HAS4SACCESS = ns.stock.has4SDataTIXAPI();
 
@@ -43,10 +31,6 @@ export async function main(ns:NS) {
 	if (hook1 === null) throw new Error("Couldn't find hook1!");
 
 	const stocks = ns.stock.getSymbols().map(symbol => new Stock(ns, symbol));
-
-	const recorder = record ? new ForecastRecorder() : null;
-
-	if (record) await httpDelete("http://localhost:3000/api");
 
 	ns.atExit(() => {
 		hook1.innerText = "";
@@ -61,7 +45,7 @@ export async function main(ns:NS) {
 	let currentCycle = allCycles % 75;
 
 	while (true) {
-		while (!marketUpdated.next().value) await ns.sleep(2000);
+		for (const update of marketUpdated) if (update) break; else await ns.sleep(2000);
 		currentCycle++;
 
 		stocks.forEach(stock => stock.update(ns, currentCycle === 75));
@@ -69,15 +53,6 @@ export async function main(ns:NS) {
 		
 		scriptTable(ns, stocks);
 		overviewDisplay(hook1, stocks);
-
-		if (recorder !== null) {
-			recorder.addForecast(stocks[0].forecastCalc.getCurrentRawForecast());
-
-			await writefile(ns, RECORDFILENAME, "home", JSON.stringify(recorder.forecastData, undefined, 2));
-			await httpPut("http://localhost:3000/api", JSON.stringify(recorder.forecastData.at(-1)));
-		}
-		
-		if (recordOnly) continue;
 
 		sellStocks(ns, stocks);
 		
@@ -201,31 +176,6 @@ export function getAllOwnedStocks(ns: NS) {
 		const pos = ns.stock.getPosition(symbol);
 		return pos[0] > 0 || pos[2] > 0;
 	});
-}
-
-export class ForecastRecorder {
-	forecasts: {
-		time: number;
-		forecast: number;
-	}[];
-
-	constructor() {
-		this.forecasts = [];
-	}
-
-	addForecast(forecast: number) {
-		this.forecasts.push({
-			time: performance.now(),
-			forecast
-		});
-	}
-
-	get forecastData() {
-		return this.forecasts.map(entry => ({
-			x: entry.time,
-			y: entry.forecast
-		})).sort((a, b) => a.x - b.x);
-	}
 }
 
 export class Stock {
@@ -468,8 +418,4 @@ export class ForecastCalc {
 	static getForecast(forecasts: Array<boolean>) {
 		return forecasts.filter(b => b).length / forecasts.length;
 	}
-}
-
-export function autocomplete(data: AutocompleteData, _args: string[]) {
-	return [data.flags(FLAGS)];
 }
