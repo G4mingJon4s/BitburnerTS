@@ -45,7 +45,7 @@ export async function main(ns:NS) {
 	let currentCycle = allCycles % 75;
 
 	while (true) {
-		for (const update of marketUpdated) if (update) break; else await ns.sleep(2000);
+		while (!marketUpdated.next().value) await ns.sleep(2000);
 		currentCycle++;
 
 		stocks.forEach(stock => stock.update(ns, currentCycle === 75));
