@@ -32,6 +32,6 @@ export async function main(ns: NS) {
 		descriptor: "BATCH-REPORT",
 		id,
 		reports,
-		order: reports.map(a => a.type).join(""),
+		order: reports.map(a => a.type).join("").padEnd(8),
 	}));
 }

@@ -32,6 +32,7 @@ export async function main(ns: NS) {
 			else ns.print(`Batch #${object.id} finished with order "${object.order}"`);
 		}
 
-		await ns.asleep(Math.max(weakenTime / possibleBatches, WINDOW));
+		// Math.ceil(w / p) + WINDOW - (Math.ceil(w / p) % W) <- This is the next best checkback in multiples of WINDOW. You can't checkback whenever, as you could be in a paywindow!
+		await ns.asleep(Math.max(Math.ceil(weakenTime / possibleBatches) + WINDOW - (Math.ceil(weakenTime / possibleBatches) % WINDOW), WINDOW));
 	}
 }

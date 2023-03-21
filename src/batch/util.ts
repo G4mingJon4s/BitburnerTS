@@ -136,9 +136,9 @@ export interface BatchReport {
 }
 
 export function isTaskReport(obj: unknown): obj is TaskReport {
-	return obj !== null && typeof obj === "object" && "descriptor" in obj && obj.descriptor === "TASK-REPORT";
+	return (obj as TaskReport)?.descriptor !== undefined && (obj as TaskReport)?.descriptor === "TASK-REPORT";
 }
 
 export function isBatchReport(obj: unknown): obj is BatchReport {
-	return obj !== null && typeof obj === "object" && "descriptor" in obj && obj.descriptor === "BATCH-REPORT";
+	return (obj as BatchReport)?.descriptor !== undefined && (obj as BatchReport)?.descriptor === "BATCH-REPORT";
 }
