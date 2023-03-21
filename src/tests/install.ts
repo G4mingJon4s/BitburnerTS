@@ -3,7 +3,7 @@ import { Stock, sellStocks } from "/stonks";
 import { getAllServers } from "/network";
 
 export async function main(ns: NS) {
-	const sure = await ns.prompt("Do you really want to install?", { type: "boolean" }) as boolean;
+	const sure = await ns.prompt("Do you really want to install? DEPRECATED: BUG FIXED", { type: "boolean" }) as boolean;
 	if (!sure) return;
 
 	getAllServers(ns).forEach(s => ns.killall(s, true));
@@ -24,6 +24,8 @@ export async function main(ns: NS) {
 	console.log(allStocks);
 
 	ns.stock.buyStock(allStocks[0].symbol, Math.min(ns.stock.getMaxShares(allStocks[0].symbol), Math.floor(moneyToSpend / ns.stock.getAskPrice(allStocks[0].symbol))));
+
+	await ns.sleep(1000);
 
 	ns.singularity.installAugmentations();
 }
