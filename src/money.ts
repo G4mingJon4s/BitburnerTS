@@ -91,19 +91,8 @@ export function time(ticks: number, simple = true) {
 	
 	const date = new Date(ticks);
 	
-	const seconds = date.getSeconds();
-	const millis = date.getMilliseconds();
-	const minutes = date.getMinutes();
-	const hours = date.getHours();
-	const days = date.getDate();
-
-	if (date.getMonth() > 0) return "Over a month. Do you really want to wait?";
-
-	const dString = days !== 0 ? `${days}d ` : "";
-	const hString = hours !== 0 ? `${hours}h ` : "";
-	const mString = minutes !== 0 ? `${minutes}m ` : "";
-	const sString = seconds !== 0 ? `${seconds}s ` : "";
-	const msString = millis !== 0 ? `${millis}ms ` : "";
-
-	return dString + hString + mString + sString + msString;
+	return Intl.DateTimeFormat(undefined, {
+		timeZone: "UTC",
+		timeStyle: "medium"
+	}).format(date);
 }
