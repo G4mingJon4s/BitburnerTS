@@ -40,7 +40,7 @@ export function money(money: number, digits: number) {
 	const item = lookup.slice().reverse().find(function(item) {
 		return money >= item.value;
 	});
-	return (minus ? "-" : "") + (item ? (money / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0");
+	return (minus ? "-" : "") + (item ? (money / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : money.toFixed(digits));
 }
 
 export const ramRegex = /(\d+[.,]?\d*)\s?([GTP]B)/;
@@ -86,9 +86,7 @@ export function ram(number: number) {
 	return (minus ? "-" : "") + (item ? (number / item.value).toFixed(20).replace(rx, "$1") + item.symbol : "0GB");
 }
 
-export function time(ticks: number, simple = true) {
-	if (simple) return `${(ticks / 1000).toFixed(2)}s`;
-	
+export function time(ticks: number) {
 	const date = new Date(ticks);
 	
 	return Intl.DateTimeFormat(undefined, {
