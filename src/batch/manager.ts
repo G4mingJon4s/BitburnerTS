@@ -1,30 +1,26 @@
 import { NS } from "@ns";
-import { BATCHFILE, TASKFILE, WINDOW, getBestPercentage, getCalculations, getFreeRam, isBatchReport, isPrepped } from "batch/util";
-import { getAllServers } from "network";
+import { BATCHFILE, WINDOW, getCalculations, getFreeRam, isBatchReport, useBestServer } from "batch/util";
 
 export async function main(ns: NS) {
 	let batchId = 0;
 
-	ns.disableLog("ALL"); ns.clearLog(); 
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
 
-	const server = await ns.prompt("Choose a server", {
-		type: "select",
-		choices: getAllServers(ns)
-	}) as string;
-	if (server === "") return ns.alert("You need to choose a server!");
-	ns.tail();
+	const [values, update] = useBestServer(ns);
+	void update(ns);
 
-	const percentage = getBestPercentage(ns, server);
 	const additionalRam = ns.getScriptRam(BATCHFILE);
 	const handle = ns.getPortHandle(ns.pid);
 
 	while (true) {
+		const { server, percentage } = values();
+
 		const { totalRamCost, maxBatches, weakenTime, possibleBatches } = getCalculations(ns, server, percentage, ns.getHostname());
 		const batchesRunning = ns.ps(ns.getHostname()).filter(p => p.filename === BATCHFILE).length;
 
 		if (totalRamCost + additionalRam < getFreeRam(ns, ns.getHostname()) && batchesRunning + 1 < maxBatches) ns.exec(BATCHFILE, ns.getHostname(), 1, batchId++, server, percentage, ns.pid);
 
-		if (!isPrepped(ns, server)) ns.ps(ns.getHostname()).filter(t => t.filename === TASKFILE && t.args.includes("H ")).forEach(t => ns.kill(t.pid));
+		// if (!isPrepped(ns, server)) ns.ps(ns.getHostname()).filter(t => t.filename === TASKFILE && t.args.includes("H ")).forEach(t => ns.kill(t.pid));
 
 		while (!handle.empty()) {
 			const object = JSON.parse(handle.read() as string) as unknown;

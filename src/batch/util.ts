@@ -1,6 +1,6 @@
 import { NS } from "@ns";
 import { calculateGrowThreads } from "batch/lambert";
-import { money } from "money";
+import { getAllServers } from "/network";
 
 export const SPACER = 50;
 export const WINDOW = SPACER * 4;
@@ -45,6 +45,8 @@ export function getCalculations(ns: NS, target: string, hackP: number, hostName 
 	const startGrow = finishGrow - growTime;
 	const startWeaken2 = 2 * SPACER;
 
+	const totalTime = weakenTime + startWeaken2;
+
 	const totalThreads = hackThreads + growThreads + weaken1Threads + weaken2Threads;
 	const totalRamCost = scriptCost * totalThreads;
 	const hackCost = hackThreads * scriptCost;
@@ -56,6 +58,9 @@ export function getCalculations(ns: NS, target: string, hackP: number, hostName 
 
 	const maxBatches = Math.floor(weakenTime / (SPACER * 4));
 	const possibleBatches = Math.min(maxBatches, Math.floor(ns.getServerMaxRam(hostName) / totalRamCost));
+
+	const moneyRate = (moneyGotten * hackChance) / totalTime;
+	const moneyRamRate = moneyRate / totalRamCost;
 
 	return {
 		hackThreads,
@@ -79,28 +84,64 @@ export function getCalculations(ns: NS, target: string, hackP: number, hostName 
 		hackChance,
 		totalThreads,
 		maxBatches,
-		possibleBatches
+		possibleBatches,
+		totalTime,
+		moneyRate,
+		moneyRamRate
 	};
 }
 
-export function getBestPercentage(ns: NS, target: string, hostname = ns.getHostname()) {
-	const allPercentages = [1, ...Array(20).fill(0).map((_, i) => (i + 1) * 5)].map(n => Math.round(n) / 100);
+/*
+OLD RATING FORMULA: Math.ceil(gain * hackChance * Math.min(Math.floor(totalRam / cost), maxBatches) / ((weakenTime + (SPACER * 2)) / 1000))
+*/
 
-	const totalRam = ns.getServerMaxRam(hostname);
+export function getBestServer(ns: NS, hostname = ns.getHostname()) {
+	const servers = getHackableServers(ns);
+	const benchmarks = servers.flatMap(s => benchmarkServer(ns, s, hostname)).sort((a, b) => b.ramRate - a.ramRate);
 
-	const values = allPercentages.map(p => {
-		const { moneyGotten: gain, totalRamCost: cost, weakenTime, hackChance, maxBatches } = getCalculations(ns, target, p, hostname);
+	return benchmarks[0];
+}
+
+/**
+ * Do NOT await the second function !!!
+ * Do NOT use any other async ns calls, except asleep !!!
+ */
+export function useBestServer(ns: NS, hostname = ns.getHostname()): [(() => { server: string; percentage: number; }), ((ns: NS) => Promise<never>)] {
+	let data = getBestServer(ns, hostname);
+
+	const getter = () => ({
+		server: data.server,
+		percentage: data.percentage
+	});
+	const updater = async (ns: NS) => {
+		while (true) {
+			await ns.asleep(0);
+			data = getBestServer(ns, hostname);
+		}
+	};
+
+	return [getter, updater];
+}
+
+export function getHackableServers(ns: NS) {
+	return getAllServers(ns).filter(s => ns.getServerMaxMoney(s) > 0 && ns.hasRootAccess(s) && ns.getServerRequiredHackingLevel(s) < ns.getPlayer().skills.hacking);
+}
+
+export function benchmarkServer(ns: NS, server: string, hostname = ns.getHostname()) {
+	const percentages = [1, ...Array(20).fill(0).map((_, i) => (i + 1) * 5)].map(n => Math.round(n) / 100);
+
+	return percentages.map(p => {
+		const calculations = getCalculations(ns, server, p, hostname);
+		
 		return {
+			server,
 			percentage: p,
-			gain: money(gain, 3),
-			cost,
-			rating: Math.ceil(gain * hackChance * Math.min(Math.floor(totalRam / cost), maxBatches) / ((weakenTime + (SPACER * 2)) / 1000))
+			ramCost: calculations.totalRamCost,
+			time: calculations.totalTime,
+			rate: calculations.moneyRate,
+			ramRate: calculations.moneyRamRate,
 		};
 	});
-
-	console.error("PERCENTAGE VALUES", values);
-
-	return values.sort((a, b) => b.rating - a.rating)[0].percentage;
 }
 
 export function getUsedTaskRam(ns: NS, server: string) {
