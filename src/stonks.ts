@@ -22,10 +22,6 @@ let HAS4SACCESS = false;
 export async function main(ns:NS) {
 	ns.clearLog(); ns.disableLog("ALL"); ns.tail();
 
-	if (!ns.stock.purchaseWseAccount() || !ns.stock.purchaseTixApi()) return ns.tprint("You can't buy a WSE Account or Access to the TIX API!");
-
-	HAS4SACCESS = ns.stock.has4SDataTIXAPI();
-
 	const doc = eval("document") as Document;
 	const hook1 = doc.getElementById("overview-extra-hook-1");
 	if (hook1 === null) throw new Error("Couldn't find hook1!");
