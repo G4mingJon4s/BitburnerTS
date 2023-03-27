@@ -1,7 +1,7 @@
 import { ActiveFragment, NS } from "@ns";
 import { table } from "table.js";
 import { money } from "money.js";
-import { getHosts, mapHosts, waitPids } from "server.js";
+import { getHosts, mapHosts, waitPids } from "/server/server.js";
 
 export const CHARGEFILE = "/stanek/charge.js";
 // export const IGNOREDHOSTS = ["home", /^hacknet-server-\d$/]; // removed due to BN9 run
@@ -12,12 +12,12 @@ export async function main(ns: NS) {
 
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
 
-	const allFrags = getChargeableFrags(ns);
-
 	while (true) {
+		const allFrags = getChargeableFrags(ns);
 		const pids = launchCharge(ns, allFrags, [...IGNOREDHOSTS, ...additional]);
 
 		await waitPids(ns, pids);
+		await ns.asleep(0); // safeguard
 
 		display(ns);
 	}
