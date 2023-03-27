@@ -116,6 +116,23 @@ export function pad(length: number, fillChar = " ") {
 	return fillChar.padEnd(length, fillChar);
 }
 
+export function addBorder(rows: string[], fillChar = " ", border = getBorder) {
+	const length = Math.max(...rows.map(r => r.length));
+
+	const padded = rows.map(r => r.padEnd(length, fillChar));
+	const sides = padded.map(r => {
+		const left = (r[0] === border()[1][3]) ? border()[1][0] + border()[1][3] : border()[1][4] + fillChar;
+		const right = (r.at(-1) === border()[1][3]) ? border()[1][3] + border()[1][2] : fillChar + border()[1][4];
+
+		return left + r + right;
+	});
+
+	const top = border()[0][0] + border()[0][3] + padded[0].split("").map(c => (c === border()[1][4]) || (c === border()[1][1]) ? border()[0][1] : border()[0][3]).join("") + border()[0][3] + border()[0][2];
+	const bottom = border()[2][0] + border()[0][3] + padded[0].split("").map(c => (c === border()[1][4]) || (c === border()[1][1]) ? border()[2][1] : border()[2][3]).join("") + border()[0][3] + border()[2][2];
+
+	return [top, ...sides, bottom].reduce(append);
+}
+
 export function getBorder() {
 	return [
 		["┌", "┬", "┐", "─", "│"],
