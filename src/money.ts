@@ -1,6 +1,8 @@
 import { NS } from "@ns";
 import { table } from "table";
 
+export const FILENAME = "money.js";
+
 export async function main(ns: NS) {
 	const sources = ns.getMoneySources();
 
