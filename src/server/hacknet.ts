@@ -75,5 +75,18 @@ export function getAllHacknetUpgrades(ns: NS) {
 		}
 	}
 
+	if (ns.hacknet.numHashes() > ns.hacknet.hashCapacity() * 0.8) {
+		const allCacheUpgrades = Array.from({ length: ns.hacknet.numNodes() }, (_, i) => ({
+			id: i,
+			cost: ns.hacknet.getCacheUpgradeCost(i, 1),
+			gain: Number.MAX_SAFE_INTEGER,
+			action: () => ns.hacknet.upgradeCache(i, 1)
+		}));
+
+		const bestCost = Math.min(...allCacheUpgrades.map(o => o.cost));
+
+		if (bestCost !== Number.POSITIVE_INFINITY) found.push(allCacheUpgrades.find(o => o.cost === bestCost) ?? allCacheUpgrades[0]);
+	}
+
 	return found;
 }
