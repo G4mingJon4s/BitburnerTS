@@ -126,7 +126,6 @@ export async function doBestAction(ns: NS) {
 	for (let i = 0; i < ACTIONPERROUND; i++) {
 		const bestAction = getBestAction(ns);
 
-		ns.bladeburner.stopBladeburnerAction();
 		await performBladeAction(ns, bestAction.type, bestAction.name);
 	}
 }
