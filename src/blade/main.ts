@@ -1,6 +1,6 @@
 import type { NS } from "@ns";
 import { addBorder, getBorder, progressBar } from "table";
-import { time } from "money";
+import { money, time } from "money";
 
 export const skillImportance = [{
 	name: "Hands of Midas",
@@ -121,7 +121,7 @@ export const VALIDACTIONS: { type: string; name: string }[] = [{
 }];
 
 export async function doBestAction(ns: NS) {
-	BladeLog.setStage("Action");
+	Log.setStage("Action");
 
 	await performBladeAction(ns, "General", "Field Analysis", () => !isAccurate(ns));
 
@@ -133,7 +133,7 @@ export async function doBestAction(ns: NS) {
 }
 
 export async function doViolence(ns: NS) {
-	BladeLog.setStage("Violence");
+	Log.setStage("Violence");
 
 	const city = ns.bladeburner.getCity();
 
@@ -146,7 +146,7 @@ export async function doViolence(ns: NS) {
 }
 
 export async function doIncreasePlayerStats(ns: NS) {
-	BladeLog.setStage("Stats");
+	Log.setStage("Stats");
 
 	if (ns.bladeburner.getStamina()[0] / ns.bladeburner.getStamina()[1] < 0.5) {
 		for (let i = 0; i < TRAINPERROUND; i++) await performBladeAction(ns, "General", "Training");
@@ -158,7 +158,7 @@ export async function doIncreasePlayerStats(ns: NS) {
 }
 
 export async function doLowerChaos(ns: NS) {
-	BladeLog.setStage("Chaos");
+	Log.setStage("Chaos");
 
 	const city = ns.bladeburner.getCity();
 
@@ -168,7 +168,7 @@ export async function doLowerChaos(ns: NS) {
 }
 
 export async function doBuySkills(ns: NS) {
-	BladeLog.setStage("Skills");
+	Log.setStage("Skills");
 
 	for (let up = getBestUpgrade(ns); up !== undefined && up.cost < ns.bladeburner.getSkillPoints(); up = getBestUpgrade(ns)) {
 		console.log(`Buying ${up.name} for ${up.cost} points`);
@@ -255,19 +255,15 @@ export function getAvailableBlackOps(ns: NS) {
 	return names.find(n => ns.bladeburner.getActionCountRemaining("BlackOps", n) > 0);
 }
 
-export function printLog(ns: NS) {
-	ns.clearLog();
-	ns.printf("%s", BladeLog.getLog(ns));
-}
-
 export async function draw(ns: NS) {
 	while (true) {
 		await ns.asleep(0);
-		printLog(ns);
+		ns.clearLog();
+		ns.printf("%s", Log.getLog(ns));
 	}
 }
 
-export class BladeLog {
+export class Log {
 	private static currentStage = "Stats";
 
 	static setStage(string: typeof STAGES[number]["name"]) {
@@ -275,20 +271,45 @@ export class BladeLog {
 	}
 
 	static getLog(ns: NS) {
-		const stages = STAGES.map(s => (this.currentStage === s.name ? "> " : "- ") + s.name);
-		const length = Math.max(...stages.map(s => s.length));
-		const finalStages = stages.map(s => s.padEnd(length));
+		const borderString = ` ${getBorder()[1][4]} `;
+
+		const left = STAGES.map(s => (this.currentStage === s.name ? "> " : "- ") + s.name);
+		const leftLength = Math.max(...left.map(s => s.length));
+		const finalLeft = left.map(s => s.padEnd(leftLength));
 
 		const action = ns.bladeburner.getCurrentAction();
 		const actionString = `Current Action: ${action.name.padEnd(13).slice(0, 13)}`;
 		const percentage = ns.bladeburner.getActionCurrentTime() / ns.bladeburner.getActionTime(action.type, action.name);
 		const barString = progressBar(percentage, actionString.length - 2);
-
 		const timeRemaining = ns.bladeburner.getActionTime(action.type, action.name) - ns.bladeburner.getActionCurrentTime();
 
-		const right = [actionString, barString, time(timeRemaining)];
+		const middle = [actionString, barString, time(timeRemaining)];
+		const middleLength = Math.max(...middle.map(s => s.length));
+		const finalMiddle = middle.map(s => s.padEnd(middleLength));
 
-		const rows = finalStages.map((s, i) => s + ` ${getBorder()[1][4]} ` + (right[i] ?? ""));
+		const allOps = ns.bladeburner.getBlackOpNames();
+		const current = getAvailableBlackOps(ns) ?? "None";
+		const indexFound = allOps.findIndex(o => o === current);
+		const index = indexFound === -1 ? allOps.length : indexFound;
+		const remaining = allOps.length - index;
+		const currentRank = ns.bladeburner.getRank();
+		const requiredRank = index === allOps.length ? -1 : ns.bladeburner.getBlackOpRank(current); // should work on its own, desc is lying...
+		const chance: [number, number] = requiredRank === -1 ? [1, 1] : ns.bladeburner.getActionEstimatedSuccessChance("BlackOps", current);
+
+		const opNameString = `Current BlackOp: ${current.padStart(Math.max(...allOps.map(s => s.length)))}`;
+		const remainingStringRaw = "BlackOps Remaining:";
+		const remainingString = remainingStringRaw + `${remaining}`.padStart(opNameString.length - remainingStringRaw.length);
+		const rankNeededStringRaw = "Current Rank:";
+		const rankNeededString = rankNeededStringRaw + `${money(currentRank, 1)} / ${money(requiredRank, 1)}`.padStart(opNameString.length - rankNeededStringRaw.length);
+		const chanceStringRaw = "Current Chance:";
+		const chanceString = chanceStringRaw + `${Math.floor(chance[0] * 100)}%`.padStart(opNameString.length - chanceStringRaw.length);
+
+		const right = [opNameString, remainingString, rankNeededString, chanceString];
+		const rightLength = Math.max(...right.map(s => s.length));
+		const finalRight = right.map(s => s.padEnd(rightLength));
+
+		const rowCount = Math.max(...[finalLeft, finalMiddle, finalRight].map(a => a.length));
+		const rows = Array.from({ length: rowCount }, (_, i) => (finalLeft[i] ?? "".padEnd(leftLength)) + borderString + (finalMiddle[i] ?? "".padEnd(middleLength)) + borderString + (finalRight[i] ?? ""));
 
 		return addBorder(rows);
 	}
