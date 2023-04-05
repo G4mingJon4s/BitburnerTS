@@ -1,6 +1,6 @@
 import { ActiveFragment, NS } from "@ns";
 import { getAllServers } from "/network";
-import { CHARGEFILE, IGNOREDHOSTS, getChargeableFrags } from "./stanek";
+import { CHARGEFILE, IGNOREDHOSTS, getChargeableFrags } from "stanek/stanek";
 
 export async function main(ns: NS) {
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
