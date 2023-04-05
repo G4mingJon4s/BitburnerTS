@@ -1,6 +1,7 @@
 import { NS } from "@ns";
 
 export const TERMINALLENGTH = 235;
+export const FILENAME = "table.js";
 
 export async function main(ns: NS): Promise<void> {
 	ns.clearLog(); ns.tail();
