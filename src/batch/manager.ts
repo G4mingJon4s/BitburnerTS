@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { BATCHFILE, BATCHINGFILES, WINDOW, getBatchesRunning, getCalculations, getFreeRam, isBatchReport, useBestServer } from "batch/util";
+import { BATCHFILE, BATCHINGFILES, WINDOW, getBatchesRunning, getCalculations, getFreeRam, getServerRamPercentage, isBatchReport, useBestServer } from "batch/util";
 
 export async function main(ns: NS) {
 	let batchId = 0;
@@ -18,7 +18,7 @@ export async function main(ns: NS) {
 		const host = "home"; // TO BE CHANGED
 		ns.scp(BATCHINGFILES, host, "home");
 
-		const { totalRamCost, maxBatches, weakenTime, possibleBatches: totalBatchesPossible } = getCalculations(ns, server, percentage, ns.getServer(host).cpuCores);
+		const { totalRamCost, maxBatches, weakenTime, possibleBatches: totalBatchesPossible } = getCalculations(ns, server, percentage, ns.getServerMaxRam(host) * getServerRamPercentage(host), ns.getServer(host).cpuCores);
 		const batchesRunning = getBatchesRunning(ns).length;
 		// const totalBatchesPossible = getTotalBatchesPossible(ns, server, percentage);
 
