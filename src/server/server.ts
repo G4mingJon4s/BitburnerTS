@@ -2,7 +2,7 @@ import { NS, Server } from "@ns";
 import { getAllServers } from "network.js";
 import { getRam, money, ram } from "money.js";
 
-export const FILENAME = "server/server.js";
+export const FILENAME = "/server/server.js";
 
 export async function main(ns: NS) {
 	await manualServerBuy(ns);
