@@ -4,6 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-fallthrough */
 import type { AutocompleteData, NS } from "@ns";
+import { time } from "./money";
+import { addBorder } from "./table";
 
 export const FILENAME = "network.js";
 export const HACKNETREGEX = /^hacknet-server-\d+$/;
@@ -27,21 +29,43 @@ export async function main(ns: NS) {
 
 	const player = ns.getPlayer();
 	let backdoored = 0;
-	for (const server of allServers) {
-		const serverObject = ns.getServer(server);
+
+	const sorted = [...allServers.filter(s => ns.hasRootAccess(s) && ns.getServerRequiredHackingLevel(s) < player.skills.hacking && !ns.getServer(s).backdoorInstalled)].map(s => ({
+		server: s,
+		time: ns.getHackTime(ns.getHostname()) / 4 * 1000
+	})).sort((a, b) => a.time - b.time);
+
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
+
+	for (const object of sorted) {
+		const serverObject = ns.getServer(object.server);
 		if (serverObject.backdoorInstalled || !serverObject.hasAdminRights || serverObject.requiredHackingSkill > player.skills.hacking) continue;
-
-		const path = getConnectArray(ns, server);
+		
+		const path = getConnectArray(ns, object.server);
 		path.forEach(server => ns.singularity.connect(server));
-
+		
+		display(ns, object, sorted);
 		await ns.singularity.installBackdoor();
 
-		backdoored += Number(ns.getServer(server).backdoorInstalled);
+		backdoored += Number(ns.getServer(object.server).backdoorInstalled);
 	}
 
 	ns.singularity.connect("home"); // QoL
 
 	ns.tprint(`Backdoored ${backdoored} new servers!`);
+}
+
+export function display(ns: NS, current: { server: string, time: number }, all: { server: string, time: number }[]) {
+	const index = all.findIndex(s => s.server === current.server);
+	const remaining = all.length - index; // including current
+	const totalTime = all.slice(remaining).reduce((acc, cur) => acc + cur.time, 0);
+
+	const remainingString = `Servers remaining: ${remaining}`;
+	const timeString = `Estimated time: ${time(totalTime)}`;
+	const currentString = `Current server: ${current.server}`;
+
+	ns.clearLog();
+	ns.printf("%s", addBorder([remainingString, timeString, currentString]));
 }
 
 export function hackServer(ns: NS, server: string) {
