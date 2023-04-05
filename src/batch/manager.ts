@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { BATCHFILE, WINDOW, getCalculations, getFreeRam, isBatchReport, useBestServer } from "batch/util";
+import { BATCHFILE, BATCHINGFILES, WINDOW, getBatchesRunning, getCalculations, getFreeRam, isBatchReport, useBestServer } from "batch/util";
 
 export async function main(ns: NS) {
 	let batchId = 0;
@@ -15,12 +15,14 @@ export async function main(ns: NS) {
 	while (true) {
 		const { server, percentage } = values();
 
-		const { totalRamCost, maxBatches, weakenTime, possibleBatches } = getCalculations(ns, server, percentage, ns.getHostname());
-		const batchesRunning = ns.ps(ns.getHostname()).filter(p => p.filename === BATCHFILE).length;
+		const host = "home"; // TO BE CHANGED
+		ns.scp(BATCHINGFILES, host, "home");
 
-		if (totalRamCost + additionalRam < getFreeRam(ns, ns.getHostname()) && batchesRunning + 1 < maxBatches) ns.exec(BATCHFILE, ns.getHostname(), 1, batchId++, server, percentage, ns.pid);
+		const { totalRamCost, maxBatches, weakenTime, possibleBatches: totalBatchesPossible } = getCalculations(ns, server, percentage, ns.getServer(host).cpuCores);
+		const batchesRunning = getBatchesRunning(ns).length;
+		// const totalBatchesPossible = getTotalBatchesPossible(ns, server, percentage);
 
-		// if (!isPrepped(ns, server)) ns.ps(ns.getHostname()).filter(t => t.filename === TASKFILE && t.args.includes("H ")).forEach(t => ns.kill(t.pid));
+		if (totalRamCost + additionalRam < getFreeRam(ns, host) && batchesRunning + 1 < maxBatches) ns.exec(BATCHFILE, host, 1, batchId++, server, percentage, ns.pid);
 
 		while (!handle.empty()) {
 			const object = JSON.parse(handle.read() as string) as unknown;
@@ -29,6 +31,6 @@ export async function main(ns: NS) {
 		}
 
 		// Math.ceil(w / p) + WINDOW - (Math.ceil(w / p) % W) <- This is the next best checkback in multiples of WINDOW. You can't checkback whenever, as you could be in a paywindow!
-		await ns.asleep(Math.max(Math.ceil(weakenTime / possibleBatches) + WINDOW - (Math.ceil(weakenTime / possibleBatches) % WINDOW), WINDOW));
+		await ns.asleep(Math.max(Math.ceil(weakenTime / totalBatchesPossible) + WINDOW - (Math.ceil(weakenTime / totalBatchesPossible) % WINDOW), WINDOW) ?? WINDOW);
 	}
 }

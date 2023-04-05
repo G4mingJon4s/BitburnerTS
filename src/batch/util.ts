@@ -1,16 +1,27 @@
-import { NS } from "@ns";
-import { calculateGrowThreads } from "batch/lambert";
-import { getAllServers } from "/network";
+import type { NS } from "@ns";
+import { calculateGrowThreads } from "batch/lambert.js";
+import { FILENAME as NETWORKFILE, getAllServers } from "network.js";
+import { FILENAME as SERVERFILE } from "server/server.js";
+import { FILENAME as MONEYFILE } from "money.js";
+import { FILENAME as TABLEFILE } from "table.js";
 
 export const SPACER = 50;
 export const WINDOW = SPACER * 4;
 export const FINISHORDER = "H W1G W2";
 export const BASETOLERANCE = SPACER - 10;
 
-export const TASKFILE = "batch/task.js";
-export const BATCHFILE = "batch/batch.js";
+export const TASKFILE = "/batch/task.js";
+export const BATCHFILE = "/batch/batch.js";
+export const UTILFILE = "/batch/util.js";
+export const LAMBERTFILE = "/batch/lambert.js";
 
-export function getCalculations(ns: NS, target: string, hackP: number, hostName = ns.getHostname()) {
+export const BATCHINGFILES = [TASKFILE, BATCHFILE, UTILFILE, LAMBERTFILE, NETWORKFILE, SERVERFILE, MONEYFILE, TABLEFILE];
+
+export async function main(ns: NS) {
+	ns.tprint(JSON.stringify(getCalculations(ns, "joesguns", 0.05, 5)));
+}
+
+export function getCalculations(ns: NS, target: string, hackP: number, hostRam: number, hostCores = 1) {
 	const scriptCost = 1.75; // hack is also 1.75, because task.ts does some shenanigans to get all operations to cost the same
 
 	const player = ns.getPlayer();
@@ -20,8 +31,6 @@ export function getCalculations(ns: NS, target: string, hackP: number, hostName 
 	server.moneyAvailable = server.moneyMax;
 	server.hasAdminRights = true;
 	server.backdoorInstalled = true;
-
-	const hostCores = ns.getServer(hostName).cpuCores;
 
 	const hackThreads = Math.max(Math.ceil(hackP / ns.formulas.hacking.hackPercent(server, player)), 1);
 	const hackTime = ns.formulas.hacking.hackTime(server, player);
@@ -57,7 +66,8 @@ export function getCalculations(ns: NS, target: string, hackP: number, hostName 
 	const hackChance = ns.formulas.hacking.hackChance(server, player);
 
 	const maxBatches = Math.floor(weakenTime / (SPACER * 4));
-	const possibleBatches = Math.min(maxBatches, Math.floor(ns.getServerMaxRam(hostName) / totalRamCost));
+
+	const possibleBatches = Math.min(maxBatches, Math.floor(hostRam / totalRamCost));
 
 	const moneyRate = (moneyGotten * hackChance) / totalTime;
 	const moneyRamRate = moneyRate / totalRamCost;
@@ -123,15 +133,35 @@ export function useBestServer(ns: NS, hostname = ns.getHostname()): [(() => { se
 	return [getter, updater];
 }
 
+export const BATCHRAMPERCENTAGES: Record<string, number> = {
+	"n00dles": 0,
+	"foodnstuff": 0,
+	"sigma-cosmetics": 0,
+	"joesguns": 0,
+	"hong-fang-tea": 0,
+	"harakiri-sushi": 0,
+	"nectar-net": 0,
+};
+
+export const BATCHRAMBASEPERCENTAGE = 0.6;
+
+export function getServerRamPercentage(server: string) {
+	return Object.entries(BATCHRAMPERCENTAGES).find(o => o[0] === server)?.[1] ?? BATCHRAMBASEPERCENTAGE;
+}
+
 export function getHackableServers(ns: NS) {
 	return getAllServers(ns).filter(s => ns.getServerMaxMoney(s) > 0 && ns.hasRootAccess(s) && ns.getServerRequiredHackingLevel(s) < ns.getPlayer().skills.hacking);
+}
+
+export function getBatchesRunning(ns: NS) {
+	return getAllServers(ns).flatMap(s => ns.ps(s).filter(t => t.filename === TASKFILE));
 }
 
 export function benchmarkServer(ns: NS, server: string, hostname = ns.getHostname()) {
 	const percentages = [1, ...Array(20).fill(0).map((_, i) => (i + 1) * 5)].map(n => Math.round(n) / 100);
 
 	return percentages.map(p => {
-		const calculations = getCalculations(ns, server, p, hostname);
+		const calculations = getCalculations(ns, server, p, ns.getServer(hostname).cpuCores);
 		
 		return {
 			server,

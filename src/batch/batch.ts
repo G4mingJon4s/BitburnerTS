@@ -4,7 +4,7 @@ import { TASKFILE, getCalculations, isPrepped, isTaskReport, type TaskReport } f
 export async function main(ns: NS) {
 	const [id, target, percentage, pid] = ns.args as [number, string, number, number];
 
-	const calculations = getCalculations(ns, target, percentage, ns.getHostname());
+	const calculations = getCalculations(ns, target, percentage, ns.getServer(ns.getHostname()).cpuCores);
 
 	const pids: number[] = [
 		isPrepped(ns, target) ? ns.exec(TASKFILE, ns.getHostname(), calculations.hackThreads, id, "H ", target, calculations.startHack, ns.pid) : -1,
