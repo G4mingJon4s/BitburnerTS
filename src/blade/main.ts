@@ -87,13 +87,15 @@ export async function main(ns: NS) {
 export const MAXCHAOS = 50;
 export const MINCHAOS = 20;
 
-export const CHARISMALIMIT = 1e6;
+export const CHARISMALIMIT = 5e4; // with charismaEffect => / 2 with each action
 
 export const MINCHANCE = 0.85;
 export const OPSCHANCE = 0.95;
 
 export const ACTIONPERROUND = 1;
 export const TRAINPERROUND = 4;
+
+export const charismaEffect = (level: number) => (100 - (Math.pow(level, 0.045) + level / 1e3)) / 100;
 
 export const skillScore: (skill: { cost: number }, importance: number) => number = (skill, importance) => skill.cost / importance;
 export const minChaos = (ns: NS) => ns.getPlayer().skills.charisma < CHARISMALIMIT ? MINCHAOS : 0;
