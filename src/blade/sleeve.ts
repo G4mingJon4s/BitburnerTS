@@ -5,7 +5,7 @@ import { money, time } from "/money";
 export const INFILTRATECYCLESNEEDED = 300;
 
 export async function main(ns: NS) {
-	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); ns.resizeTail(315, 450);
 
 	const sleeves = Array.from({ length: ns.sleeve.getNumSleeves() }, (_, i) => i);
 

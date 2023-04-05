@@ -74,7 +74,7 @@ export const STAGES = [
 ] as const;
 
 export async function main(ns: NS) {
-	ns.disableLog("ALL"); ns.clearLog(); ns.tail();
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); ns.resizeTail(900, 150);
 
 	void draw(ns);
 
