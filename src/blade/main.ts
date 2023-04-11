@@ -48,7 +48,7 @@ export const skillLimit = [{
 	limit: 25
 },{
 	name: "Hands of Midas",
-	limit: 50
+	limit: 0
 },
 { name: "Hyperdrive",
 	limit: 50
@@ -74,7 +74,7 @@ export const STAGES = [
 ] as const;
 
 export async function main(ns: NS) {
-	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); ns.resizeTail(900, 150);
+	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); await ns.asleep(1); ns.resizeTail(900, 150);
 
 	void draw(ns);
 
