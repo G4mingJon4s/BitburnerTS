@@ -29,6 +29,11 @@ export async function main(ns:NS) {
 	const data = ns.flags(FLAGS);
 	const noBuy = data["noBuy"] as boolean;
 	const focusMoney = data["noBuy"] as boolean;
+	
+	while (!ns.gang.inGang()) {
+		await ns.asleep(0);
+		ns.gang.createGang("Slum Snakes");
+	}
 
 	const doc = eval("document") as Document;
 	const hook0 = doc.getElementById("overview-extra-hook-0");
