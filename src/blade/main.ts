@@ -76,6 +76,8 @@ export const STAGES = [
 export async function main(ns: NS) {
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); await ns.asleep(1); ns.resizeTail(900, 150);
 
+	if (!ns.bladeburner.joinBladeburnerDivision()) return ns.alert("Cannot join BB!");
+
 	void draw(ns);
 
 	while (true) {
