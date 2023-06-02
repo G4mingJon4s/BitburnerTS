@@ -4,8 +4,7 @@ import { money } from "money.js";
 import { getHosts, mapHosts, waitPids } from "/server/server.js";
 
 export const CHARGEFILE = "/stanek/charge.js";
-export const IGNOREDHOSTS = ["home", /^hacknet-server-\d+$/]; // removed due to BN9 run
-// export const IGNOREDHOSTS: string[] = [];
+export const IGNOREDHOSTS = ["home", /^hacknet-server-\d+$/, "joesguns"];
 
 export async function main(ns: NS) {
 	const additional = ns.args as string[];
