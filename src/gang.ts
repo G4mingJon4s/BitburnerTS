@@ -50,7 +50,7 @@ export async function main(ns:NS) {
 	ns.print("Syncing with territory warfare!");
 
 	while (!await tickSync(ns)) ns.print("Could not tickSync!");
-	let warfareTick = ns.getTimeSinceLastAug();
+	let warfareTick = Date.now();
 	let checkBack = ns.gang.getBonusTime() > 100 ? 800 : 20000;
 
 	while (true) {
@@ -63,7 +63,7 @@ export async function main(ns:NS) {
 
 		if (!noBuy) buyEquipments(ns, members, ns.getPlayer().money * 0.8, getDiscount(ns) > 0.3);
 		
-		if (gangInfo.territory < 1 && warfareTick + checkBack < ns.getTimeSinceLastAug() + 800) {
+		if (gangInfo.territory < 1 && warfareTick + checkBack < Date.now() + 800) {
 			if (SHOWCLASHONHOCK) hook0.innerText = "Gang clash now";
 			
 			const clashAllowed = canClash(ns);
@@ -73,7 +73,7 @@ export async function main(ns:NS) {
 			members.filter(member => !clashAllowed || ns.gang.getMemberInformation(member).def >= 600).forEach(member => ns.gang.setMemberTask(member, "Territory Warfare"));
 			
 			while (!await tickSync(ns)) ns.print("Could not tickSync!");
-			warfareTick = ns.getTimeSinceLastAug();
+			warfareTick = Date.now();
 			checkBack = ns.gang.getBonusTime() > 100 ? 800 : 20000;
 			
 			ns.gang.setTerritoryWarfare(false);
@@ -84,7 +84,7 @@ export async function main(ns:NS) {
 		members.forEach(member => assignTask(ns, member, focusMoney));
 
 		if (LOGGING) displayPresence(ns);
-		if (gangInfo.territory < 1 && SHOWCLASHONHOCK) hook0.innerText = `Gang clash in ${((warfareTick + checkBack - ns.getTimeSinceLastAug()) / 1000).toFixed(1)}s `;
+		if (gangInfo.territory < 1 && SHOWCLASHONHOCK) hook0.innerText = `Gang clash in ${((warfareTick + checkBack - Date.now()) / 1000).toFixed(1)}s `;
 		if (gangInfo.territory === 1 && hook0.innerText !== "" && SHOWCLASHONHOCK) hook0.innerText = "";
 		
 		await ns.sleep(500);

@@ -37,7 +37,7 @@ export async function main(ns:NS) {
 
 	sellStocks(ns, stocks, true); // Sell all stocks from the previous script
 
-	const allCycles = Math.floor(ns.getTimeSinceLastAug() / 6000);
+	const allCycles = Math.floor((Date.now() - ns.getResetInfo().lastAugReset) / 6000);
 	let currentCycle = allCycles % 75;
 
 	while (true) {
