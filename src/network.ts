@@ -39,7 +39,7 @@ export async function main(ns: NS) {
 
 	for (const object of sorted) {
 		const serverObject = ns.getServer(object.server);
-		if (serverObject.backdoorInstalled || !serverObject.hasAdminRights || serverObject.requiredHackingSkill > player.skills.hacking) continue;
+		if (serverObject.backdoorInstalled || !serverObject.hasAdminRights || (serverObject?.requiredHackingSkill ?? 0) > player.skills.hacking) continue;
 		
 		const path = getConnectArray(ns, object.server);
 		path.forEach(server => ns.singularity.connect(server));
