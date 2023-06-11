@@ -1,6 +1,7 @@
 {
 	"include": [
 		"NetscriptDefinitions.d.ts",
+		"types.d.ts",
 		"src/**/*"
 	],
 	"compilerOptions": {
@@ -16,6 +17,7 @@
 		"outDir": "dist/",
 		"baseUrl": "src/",
 		"allowJs": true,
+		"jsx": "react",
 		"paths": {
 			"/*": [
 				"*"

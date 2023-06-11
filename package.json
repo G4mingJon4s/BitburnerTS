@@ -5,7 +5,7 @@
 		"ES6"
 	],
 	"scripts": {
-		"watch:transpile": "tsc -w --preserveWatchOutput",
+		"watch:transpile": "tsc -w --preserveWatchOutput --jsx react",
 		"watch:local": "node build/watch.cjs",
 		"watch:remote": "bitburner-filesync",
 		"watch:init": "node build/init.cjs",
@@ -23,5 +23,8 @@
 		"fast-glob": "^3.2.12",
 		"sync-directory": "^5.1.7",
 		"typescript": "^4.7.4"
+	},
+	"dependencies": {
+		"@types/react": "^18.2.11"
 	}
 }
