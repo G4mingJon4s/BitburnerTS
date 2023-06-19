@@ -4,14 +4,14 @@ import Test from "components/test";
 export async function main(ns: NS) {
 	ns.disableLog("ALL"); ns.clearLog(); ns.tail(); ns.atExit(() => ns.closeTail());
 
-	const [value, setValue, subscribe] = nsState(0);
+	const [value, setValue, subscribe] = state(0);
 
 	// @ts-expect-error Property 'printRaw' does not exist on type 'NS'.
-	ns.printRaw(<Test get={value} set={setValue} subscribe={subscribe}/>);
+	ns.printRaw(<Test ns={ns} get={value} set={setValue} subscribe={subscribe}/>);
 
 	while(true) {
 		await ns.asleep(1000);
-		ns.tprint(value());
+		ns.tprint("state: ", value());
 		if (Math.random() > 0.5) setValue(value() + 1);
 	}
 }
@@ -21,7 +21,7 @@ export type set<T> = (value: T | ((value: T) => T)) => void;
 export type action<T> = (value: T) => void;
 export type subscribe<T> = (action: action<T>) => () => undefined;
 
-export function nsState<T>(value: T): [get<T>, set<T>, subscribe<T>] {
+export function state<T>(value: T): [get<T>, set<T>, subscribe<T>] {
 	let state = value;
 
 	const actions = new Map<string, action<T>>();

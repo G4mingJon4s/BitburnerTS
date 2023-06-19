@@ -1,43 +1,38 @@
+import type p5 from "p5";
+import P5Canvas from "./P5Canvas";
 import type { get, set, subscribe } from "/tests/cct";
-
-const button: React.CSSProperties = {
-	border: "2px solid white",
-	background: "#ff6060",
-	margin: "0.5rem",
-	padding: "0.2rem",
-	cursor: "pointer",
-	fontSize: "18px",
-	justifyContent: "center"
-};
-
-const header: React.CSSProperties = {
-	color: "white",
-	justifyContent: "center",
-	alignItems: "center"
-};
-
-const container: React.CSSProperties = {
-	height: "300px",
-	width: "500px",
-	display: "flex",
-	flexDirection: "column"
-};
-
+import type { NS } from "../../NetscriptDefinitions";
 interface Props {
 	get: get<number>;
 	set: set<number>;
 	subscribe: subscribe<number>;
+	ns: NS;
 }
 
-export default function Test({ get, set, subscribe }: Props) {
+const sketch = (ns: NS) => (handle: p5) => {
+	handle.setup = () => {
+		handle.createCanvas(500, 500);
+		handle.frameRate(10);
+	};
+
+	handle.draw = () => {
+		handle.background(0);
+		handle.fill(255);
+		handle.rect(200, 200, 30, 30);
+		ns.tprint("draw");
+	};
+};
+
+export default function Test({ ns, get, set, subscribe }: Props) {
 	const [_, rerender] = React.useState(false);
 
 	React.useEffect(() => subscribe(() => rerender(a => !a)), []);
 
 	return (
-		<div style={container}>
-			<h1 style={header}>Hello there!</h1>
-			<button onClick={() => set(a => a + 1)} style={button}>Count: {get()}</button>
+		<div>
+			<h1>Hello there!</h1>
+			<button onClick={() => set(a => a + 1)}>Count: {get()}</button>
+			<P5Canvas sketch={sketch(ns)}/>
 		</div>
 	);
 }
