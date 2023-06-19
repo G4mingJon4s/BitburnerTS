@@ -26,5 +26,9 @@
 		"glob": "^10.2.7",
 		"sync-directory": "^5.1.7",
 		"typescript": "^4.7.4"
+	},
+	"dependencies": {
+		"@types/p5": "^1.6.2",
+		"p5": "^1.6.0"
 	}
 }
