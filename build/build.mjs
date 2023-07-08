@@ -8,7 +8,7 @@ export async function buildScript(scriptPath, watch = false) {
 	const ctx =  await context({
 		entryPoints: [scriptPath],
 		outfile: `./dist/${normalize(scriptPath)}.js`,
-		minify: !watch,
+		minify: true,
 		bundle: true,
 		format: "esm",
 		platform: "browser",
