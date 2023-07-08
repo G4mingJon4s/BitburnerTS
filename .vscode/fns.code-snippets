@@ -20,7 +20,6 @@
 			"fns",
 			"flagns"
 		],
-		"scope": "typescript",
 		"body": [
 			"import type { AutocompleteData, NS } from \"@ns\";",
 			"",

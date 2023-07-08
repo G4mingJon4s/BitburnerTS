@@ -21,7 +21,6 @@
 			"cctns",
 			"cct"
 		],
-		"scope": "typescript",
 		"body": [
 			"import type { NS } from \"@ns\";",
 			"",
