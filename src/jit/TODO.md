@@ -5,17 +5,16 @@
   - [ ] Figuring out how to launch a batch
   - [ ] Figuring out how to prep
   - [ ] Figuring out how to queue up batches
-- [ ] Basic calculations
-  - [ ] Batch timings
-  - [ ] Batch thread counts
-  - [ ] Estimated yield
+- [X] Basic calculations
+  - [X] Batch timings
+  - [X] Batch thread counts
+  - [X] Estimated yield
 - [ ] Basic monitoring
   - [ ] Basic data
   - [ ] View of batches
-- [ ] Target benchmarking
-  - [ ] Benchmark single server
-  - [ ] Compare all benchmarked servers
-  
+- [X] Target benchmarking
+  - [X] Benchmark single server
+  - [X] Compare all benchmarked servers
 
 ## Idea
 The Batcher will check how much ram is available on all of the servers it is allowed to use and check how if a batch can fit in.
@@ -36,4 +35,4 @@ In the end it checks if the server it is currently targetting is still the best 
 ## Points of concern
 - **Queueing up Batches** <br/> How? Do I need to store the launched batches? Do I store the entire batch or single tasks?
 - **Data formatting** <br/> How do I handle my data for batches? Can I store them for debugging?
-- **Visuallising the Batches** <br/> What library? I probably need a consistant format for my batches first
+- **Visualising the Batches** <br/> What library? I probably need a consistant format for my batches first
